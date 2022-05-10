@@ -127,8 +127,8 @@ export default class GenericLayout {
             this.presentation,
             this.slide.objectId,
             'PICTURE'
-          ) || [];
-          console.log('@@found',pictureElements.length,'picture elements', pictureElements);
+          );
+          console.log('@@found picture elements', pictureElements);
           // send all the images, and just the first placeholder
           this.appendCreateImageRequests(body.images, pictureElements![0], requests);
         }
@@ -294,7 +294,7 @@ export default class GenericLayout {
 
   protected appendCreateImageRequests(
     images: ImageDefinition[],
-    placeholders: SlidesV1.Schema$PageElement | undefined,
+    placeholder: SlidesV1.Schema$PageElement | undefined,
     requests: SlidesV1.Schema$Request[]
   ): void {
     // TODO - Fix weird cast
