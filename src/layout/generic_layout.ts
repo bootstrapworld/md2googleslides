@@ -127,10 +127,9 @@ export default class GenericLayout {
             this.presentation,
             this.slide.objectId,
             'PICTURE'
-          );
-          console.log('@@found picture elements', pictureElements);
+          ) || [];
           // send all the images, and just the first placeholder
-          this.appendCreateImageRequests(body.images, pictureElements![0], requests);
+          this.appendCreateImageRequests(body.images, pictureElements, requests);
         }
         if (body.videos && body.videos.length) {
           this.appendCreateVideoRequests(body.videos, placeholder, requests);
@@ -294,39 +293,45 @@ export default class GenericLayout {
 
   protected appendCreateImageRequests(
     images: ImageDefinition[],
-    placeholder: SlidesV1.Schema$PageElement | undefined,
+    placeholders: SlidesV1.Schema$PageElement[],
     requests: SlidesV1.Schema$Request[]
   ): void {
-    // TODO - Fix weird cast
-    const layer = (Layout as (s: string) => Layout.PackingSmith)('left-right'); // TODO - Configurable?
-    for (const image of images) {
-      debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
+    const that = this;
+
+    function transformAndReplacePlaceholder(
+      image: ImageDefinition, 
+      placeholder: SlidesV1.Schema$PageElement
+    ): void {
+      // TODO - Fix weird cast
+      const layer = (Layout as (s: string) => Layout.PackingSmith)('left-right'); // TODO - Configurable?
+      debug('Slide #%d: adding inline image %s', that.slide.index, image.url);
       layer.addItem({
         width: image.width + image.padding * 2,
         height: image.height + image.padding * 2,
         meta: image,
       });
-    }
+      const box = that.getBodyBoundingBox(placeholder);
+      const computedLayout = layer.export();
 
-    const box = this.getBodyBoundingBox(placeholder);
-    const computedLayout = layer.export();
+      const scaleRatio = Math.min(
+        box.width / computedLayout.width,
+        box.height / computedLayout.height
+      );
 
-    const scaleRatio = Math.min(
-      box.width / computedLayout.width,
-      box.height / computedLayout.height
-    );
+      const scaledWidth = computedLayout.width * scaleRatio;
+      const scaledHeight = computedLayout.height * scaleRatio;
 
-    const scaledWidth = computedLayout.width * scaleRatio;
-    const scaledHeight = computedLayout.height * scaleRatio;
+      const baseTranslateX = box.x + (box.width - scaledWidth) / 2;
+      const baseTranslateY = box.y + (box.height - scaledHeight) / 2;
 
-    const baseTranslateX = box.x + (box.width - scaledWidth) / 2;
-    const baseTranslateY = box.y + (box.height - scaledHeight) / 2;
-
-    for (const item of computedLayout.items) {
+      if(computedLayout.items.length > 1) {
+        console.error('IMPOSSIBLE - multiple images in transformAndReplacePlaceholder');
+      }
+      const item = computedLayout.items[0];
       const itemOffsetX = item.meta.offsetX ? item.meta.offsetX : 0;
       const itemOffsetY = item.meta.offsetY ? item.meta.offsetY : 0;
       const itemPadding = item.meta.padding ? item.meta.padding : 0;
-      const width = item.meta.width * scaleRatio;
+      const width  = item.meta.width  * scaleRatio;
       const height = item.meta.height * scaleRatio;
       const translateX =
         baseTranslateX + (item.x + itemPadding + itemOffsetX) * scaleRatio;
@@ -337,24 +342,15 @@ export default class GenericLayout {
       requests.push({
         createImage: {
           elementProperties: {
-            pageObjectId: this.slide.objectId,
+            pageObjectId: that.slide.objectId,
             size: {
-              height: {
-                magnitude: height,
-                unit: 'EMU',
-              },
-              width: {
-                magnitude: width,
-                unit: 'EMU',
-              },
+              height: { magnitude: height, unit: 'EMU'},
+              width:  { magnitude: width,  unit: 'EMU'},
             },
             transform: {
-              scaleX: 1,
-              scaleY: 1,
-              translateX: translateX,
-              translateY: translateY,
-              shearX: 0,
-              shearY: 0,
+              scaleX: 1, scaleY: 1,
+              translateX: translateX, translateY: translateY,
+              shearX: 0, shearY: 0,
               unit: 'EMU',
             },
           },
@@ -362,9 +358,17 @@ export default class GenericLayout {
         },
       });
 
-      // delete the placeholder
-      requests.push({'deleteObject': {'objectId': placeholder!['objectId']}});
+      // if a placeholder was found, delete it
+      if (placeholder) {
+        requests.push({'deleteObject': {'objectId': placeholder!['objectId']}});
+      }
     }
+
+    images.forEach((image, i) => {
+      debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
+      const placeholder = placeholders[i] || undefined;
+      transformAndReplacePlaceholder(image, placeholder)
+    });
   }
 
   protected appendCreateVideoRequests(
