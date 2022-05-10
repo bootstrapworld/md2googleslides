@@ -123,7 +123,14 @@ export default class GenericLayout {
         const body = this.slide.bodies[i];
         this.appendFillPlaceholderTextRequest(body.text, placeholder, requests);
         if (body.images && body.images.length) {
-          this.appendCreateImageRequests(body.images, placeholder, requests);
+          const pictureElements = findPlaceholder(
+            this.presentation,
+            this.slide.objectId,
+            'PICTURE'
+          ) || [];
+          console.log('@@found',pictureElements.length,'picture elements', pictureElements);
+          // send all the images, and just the first placeholder
+          this.appendCreateImageRequests(body.images, pictureElements![0], requests);
         }
         if (body.videos && body.videos.length) {
           this.appendCreateVideoRequests(body.videos, placeholder, requests);
@@ -287,7 +294,7 @@ export default class GenericLayout {
 
   protected appendCreateImageRequests(
     images: ImageDefinition[],
-    placeholder: SlidesV1.Schema$PageElement | undefined,
+    placeholders: SlidesV1.Schema$PageElement | undefined,
     requests: SlidesV1.Schema$Request[]
   ): void {
     // TODO - Fix weird cast
@@ -326,6 +333,7 @@ export default class GenericLayout {
       const translateY =
         baseTranslateY + (item.y + itemPadding + itemOffsetY) * scaleRatio;
 
+      // add the image at about the same size/position as the placeholder
       requests.push({
         createImage: {
           elementProperties: {
@@ -353,6 +361,9 @@ export default class GenericLayout {
           url: item.meta.url,
         },
       });
+
+      // delete the placeholder
+      requests.push({'deleteObject': {'objectId': placeholder!['objectId']}});
     }
   }
 
