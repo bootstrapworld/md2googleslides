@@ -204,6 +204,7 @@ export default class GenericLayout {
       | Partial<SlidesV1.Schema$CreateParagraphBulletsRequest>,
     requests: SlidesV1.Schema$Request[]
   ): void {
+
     // Insert the raw text first
     const request = {
       insertText: extend(
@@ -215,6 +216,9 @@ export default class GenericLayout {
     };
     requests.push(request);
 
+    // how much WS did we trim? We'll need to adjust textRuns
+    const startingWhitespace = text.rawText.search(/\S/);
+
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
@@ -224,8 +228,8 @@ export default class GenericLayout {
           {
             textRange: {
               type: 'FIXED_RANGE',
-              startIndex: textRun.start,
-              endIndex: textRun.end,
+              startIndex: textRun.start! - startingWhitespace,
+              endIndex: textRun.end! - startingWhitespace,
             },
             style: {
               bold: textRun.bold,
@@ -264,8 +268,8 @@ export default class GenericLayout {
           {
             textRange: {
               type: 'FIXED_RANGE',
-              startIndex: listMarker.start,
-              endIndex: listMarker.end,
+              startIndex: listMarker.start! - startingWhitespace,
+              endIndex: listMarker.end! - startingWhitespace,
             },
             bulletPreset:
               listMarker.type === 'ordered'
