@@ -50,7 +50,9 @@ const parser = markdownIt(mdOptions)
   .use(video, {youtube: {width: 640, height: 390}});
 
 function parseMarkdown(markdown: string): Token[] {
-  return parser.parse(markdown, {});
+  const parseTree = parser.parse(markdown, {});
+  //console.log(JSON.stringify(parseTree, null, 4))
+  return parseTree;
 }
 
 export default parseMarkdown;
