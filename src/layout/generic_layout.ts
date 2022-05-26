@@ -223,13 +223,20 @@ export default class GenericLayout {
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
+      const runStart = textRun.start! - startingWhitespace;
+      const runEnd = textRun.end! - startingWhitespace;
+
+      if(runStart > runEnd) {
+        console.error(JSON.stringify(textRun, null, 4));
+        throw "invalid textRun";
+      }
       const request: SlidesV1.Schema$Request = {
         updateTextStyle: extend(
           {
             textRange: {
               type: 'FIXED_RANGE',
-              startIndex: textRun.start! - startingWhitespace,
-              endIndex: textRun.end! - startingWhitespace,
+              startIndex: runStart,
+              endIndex: runEnd
             },
             style: {
               bold: textRun.bold,
