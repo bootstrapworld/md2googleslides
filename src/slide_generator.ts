@@ -250,6 +250,7 @@ export default class SlideGenerator {
       image: ImageDefinition
     ): Promise<void> => {
       assert(image.url);
+      console.log(JSON.stringify(urlCache,null,4));
       const parsedUrl = new URL(image.url);
       // have we already uploaded it?
       if(urlCache[parsedUrl.pathname]) { 
