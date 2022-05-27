@@ -506,8 +506,8 @@ fullTokenRules['th_open'] = fullTokenRules['td_open'] = (token, context) => {
       },
     },
   });
-  context.startStyle(style);
   context.startTextBlock();
+  context.startStyle(style);
 };
 
 fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
