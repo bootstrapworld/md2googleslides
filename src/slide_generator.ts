@@ -223,7 +223,7 @@ export default class SlideGenerator {
     });
 
     // process each image, throttling if it's an upload
-    if(upload) {
+    if(upload && (images.length > 0)) {
       console.log("Uploading images for this slide deck");
       const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
       bar.start(images.length-1, 0);
