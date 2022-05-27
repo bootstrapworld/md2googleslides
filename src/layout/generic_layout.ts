@@ -218,16 +218,15 @@ export default class GenericLayout {
 
     // how much WS did we trim? We'll need to adjust textRuns
     const startingWhitespace = text.rawText.search(/\S/);
-
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
-      const runStart = textRun.start! - startingWhitespace;
-      const runEnd   = textRun.end! - startingWhitespace;
+      const runStart = Math.max(textRun.start! - startingWhitespace, 0);
+      const runEnd   = Math.max(textRun.end! - startingWhitespace);
 
-      if(runStart > runEnd) {
-        console.error(JSON.stringify(textRun, null, 4));
+      if(runStart > runEnd || runStart < 0) {
+        console.error(JSON.stringify(textRun, null, 4), 'startingWhitespace', startingWhitespace);
         throw "invalid textRun";
       }
       const request: SlidesV1.Schema$Request = {
