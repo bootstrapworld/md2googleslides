@@ -120,9 +120,6 @@ export class Context {
     if(Object.keys(style).filter(k=>['start', 'end'].includes(k)).length == 0) {
       return;
     }
-//    if (_.isEmpty(_.keys(_.omitBy(style, (v,k) => ['start', 'end'].includes(k))))) {
-//      return; // Ignore ranges with no style
-//    }
     if (find(this.text.textRuns, matches(style))) {
       return; // Ignore duplicate ranges
     }
