@@ -103,8 +103,10 @@ export class Context {
   public startStyle(newStyle: StyleDefinition): void {
     const previousStyle = this.currentStyle();
     const style = extend({}, newStyle, previousStyle);
+    //console.log('@', JSON.stringify(style), this.text);
     style.start = this.text?.rawText.length ?? 0;
     this.styles.push(style);
+    //console.log('started a style.',style,'stack depth is', this.styles.length);
   }
 
   public endStyle(): void {
@@ -124,5 +126,6 @@ export class Context {
       return; // Ignore duplicate ranges
     }
     this.text.textRuns.push(style);
+    //console.log('finished a style. stack depth is', this.styles.length);
   }
 }

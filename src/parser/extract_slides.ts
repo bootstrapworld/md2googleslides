@@ -63,6 +63,7 @@ function isVideo(token: any): token is VideoToken {
 
 function processMarkdownToken(token: Token, context: Context): void {
   debug('Token: %O', token);
+  //console.log('saw ', token.type);
   const rule = ruleSet[token.type];
   if (rule) {
     rule(token, context);
@@ -493,21 +494,9 @@ fullTokenRules['tr_close'] = (token, context) => {
   context.endStyle();
 };
 
-fullTokenRules['td_open'] = (token, context) => {
+fullTokenRules['th_open'] = fullTokenRules['td_open'] = (token, context) => {
   const style = applyTokenStyle(token, {
-    foregroundColor: {
-      opaqueColor: {
-        themeColor: 'TEXT1',
-      },
-    },
-  });
-  context.startStyle(style);
-  context.startTextBlock();
-};
-
-fullTokenRules['th_open'] = (token, context) => {
-  const style = applyTokenStyle(token, {
-    bold: true,
+    bold: token.type == 'th_open', // headers are always bold
     // Note: Non-placeholder elements aren't aware of the slide theme.
     // Set the foreground color to match the primary text color of the
     // theme.
@@ -526,6 +515,7 @@ fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
   context.endStyle();
   context.row.push(context.text);
   context.startTextBlock();
+  //console.log('after td/th_close:', JSON.stringify(context, (k,v) => k=="css"? undefined : v, 4));
 };
 
 fullTokenRules['generated_image'] = (token, context) => {

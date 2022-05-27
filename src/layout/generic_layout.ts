@@ -224,7 +224,7 @@ export default class GenericLayout {
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
       const runStart = textRun.start! - startingWhitespace;
-      const runEnd = textRun.end! - startingWhitespace;
+      const runEnd   = textRun.end! - startingWhitespace;
 
       if(runStart > runEnd) {
         console.error(JSON.stringify(textRun, null, 4));
