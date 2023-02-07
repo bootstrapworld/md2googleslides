@@ -44,6 +44,7 @@
   "dependencies": {
     "argparse": "^2.0.1",
     "await-to-js": "^3.0.0",
+    "canvas": "^2.11.0",
     "cli-progress": "^3.11.0",
     "core-js": "^3.22.5",
     "debug": "^4.3.4",
@@ -75,9 +76,9 @@
     "probe-image-size": "^7.2.3",
     "promise": "^8.0.3",
     "promise-retry": "^2.0.1",
+    "puppeteer": "^14.1.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "puppeteer": "^14.1.0",
     "sharp": "^0.30.4",
     "tmp": "0.2.1",
     "tmp-promise": "^3.0.3",

@@ -29,6 +29,7 @@ import {
   findLayoutIdByName,
   findPlaceholder,
   findSpeakerNotesObjectId,
+  calculateFontSize,
 } from './presentation_helpers.js';
 import assert from 'assert';
 
@@ -133,7 +134,7 @@ export default class GenericLayout {
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
-        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests);
+        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, placeholder);
 
         if (body.images && body.images.length) {
           // send all the images, and just the first placeholder
@@ -169,7 +170,8 @@ export default class GenericLayout {
   protected appendFillPlaceholderTextRequest(
     value: TextDefinition | undefined,
     placeholder: string | SlidesV1.Schema$PageElement,
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
+    element?: SlidesV1.Schema$PageElement
   ): void {
     if (!value) {
       debug('No text for placeholder %s');
@@ -193,7 +195,8 @@ export default class GenericLayout {
     this.appendInsertTextRequests(
       value,
       {objectId: placeholder.objectId},
-      requests
+      requests,
+      element
     );
   }
 
@@ -202,8 +205,11 @@ export default class GenericLayout {
     locationProps:
       | Partial<SlidesV1.Schema$UpdateTextStyleRequest>
       | Partial<SlidesV1.Schema$CreateParagraphBulletsRequest>,
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
+    element? : SlidesV1.Schema$PageElement
   ): void {
+
+    if(element) { console.error('@@@@@TRYING TO AUTOFIT'); }
 
     // Insert the raw text first
     const request = {
@@ -229,6 +235,7 @@ export default class GenericLayout {
         console.error(JSON.stringify(textRun, null, 4), 'startingWhitespace', startingWhitespace);
         throw "invalid textRun";
       }
+
       const request: SlidesV1.Schema$Request = {
         updateTextStyle: extend(
           {
@@ -246,7 +253,12 @@ export default class GenericLayout {
               underline: textRun.underline,
               smallCaps: textRun.smallCaps,
               fontFamily: textRun.fontFamily,
-              fontSize: textRun.fontSize,
+              // if we're autofitting, call out to calculateFontSize
+              // to render a canvas element and estimate size
+              fontSize: element? {
+                magnitude: calculateFontSize(element, text.rawText),
+                unit: 'PT'
+              } : textRun.fontSize,
               link: textRun.link,
               baselineOffset: textRun.baselineOffset,
             },
