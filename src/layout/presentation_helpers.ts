@@ -134,7 +134,9 @@ export function findSpeakerNotesObjectId(
 }
 
 // Added be Emmanuel Schanzer 2/5/23
-// from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
+// based on code from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
+// this code had a few bugs, but more importantly we try to measure a sample of the actual text
+// instead of a single 'W' character
 
 const DEFAULT_FONT_WEIGHT = 'normal';
 const DEFAULT_FONT_SIZE = 16;
@@ -253,7 +255,6 @@ export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: st
     // get dimensions in PT, and compare to element size
     const height = convertPXtoPT(emAcent + emDecent);
     const width  = convertPXtoPT(metrics.width);
-    console.log('at this fontSize, width is expected to be '+width+'pt, and height to be '+height+'pt');
     return width > size.width || height > size.height;
   };
   // continually loop over until the size of the text element is less than the intiial size of the element in gslides

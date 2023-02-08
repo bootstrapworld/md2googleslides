@@ -134,7 +134,6 @@ export default class GenericLayout {
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
-        console.log('appending text for body '+i)
         this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, placeholder);
 
         if (body.images && body.images.length) {
@@ -196,7 +195,7 @@ export default class GenericLayout {
       value,
       {objectId: placeholder.objectId},
       requests,
-      element
+      //element // passing the element turns on auto-fitting
     );
   }
 
@@ -228,7 +227,6 @@ export default class GenericLayout {
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
-      //console.log(textRun);
       const runStart = Math.max(textRun.start! - startingWhitespace, 0);
       const runEnd   = Math.max(textRun.end! - startingWhitespace);
 
@@ -255,7 +253,8 @@ export default class GenericLayout {
               fontFamily: textRun.fontFamily,
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
-              fontSize: element? {
+              // FOR NOW, AUTO-FITTING IS TURNED OFF VIA LINE 198
+              fontSize: (element && !textRun.fontSize)? {
                 magnitude: calculateFontSize(element, text.rawText),
                 unit: 'PT'
               } : textRun.fontSize,
