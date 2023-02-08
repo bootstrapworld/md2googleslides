@@ -134,6 +134,7 @@ export default class GenericLayout {
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
+        console.log('appending text for body '+i)
         this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, placeholder);
 
         if (body.images && body.images.length) {
@@ -191,7 +192,6 @@ export default class GenericLayout {
       }
       placeholder = pageElements[0];
     }
-
     this.appendInsertTextRequests(
       value,
       {objectId: placeholder.objectId},
@@ -228,6 +228,7 @@ export default class GenericLayout {
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
+      //console.log(textRun);
       const runStart = Math.max(textRun.start! - startingWhitespace, 0);
       const runEnd   = Math.max(textRun.end! - startingWhitespace);
 
@@ -235,7 +236,6 @@ export default class GenericLayout {
         console.error(JSON.stringify(textRun, null, 4), 'startingWhitespace', startingWhitespace);
         throw "invalid textRun";
       }
-
       const request: SlidesV1.Schema$Request = {
         updateTextStyle: extend(
           {

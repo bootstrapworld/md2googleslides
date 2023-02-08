@@ -140,14 +140,16 @@ const DEFAULT_FONT_WEIGHT = 'normal';
 const DEFAULT_FONT_SIZE = 16;
 
 // An English Metric Unit (EMU) is defined as 1/360,000 of a centimeter and thus there are 914,400 EMUs per inch, and 12,700 EMUs per point.
-export const convertEMUToPT = (emu: number): number => emu / 12700;
+export const convertEMUtoPT = (emu: number): number => emu / 12700;
 // convert pixles to PT, there is 0.75pt to a px
-export const covertPXtoPT = (px: number): number => px * 0.75;
+export const convertPXtoPT = (px: number): number => px * 0.75;
 // convert PT to PX, there is 0.75pt to a px
 export const convertPTtoPX = (px: number): number => px / 0.75;
+export const convertEMUtoPX = (emu: number): number => convertPTtoPX(convertEMUtoPT(emu));
+
 // this is a very simple example of what i have, obviously you'll need error handling if those values don't exist
 // The below will return the dimensions in EMU, to convert to PT divide the EMU value by `12700`
-export function getElementSize(element: SlidesV1.Schema$PageElement) {
+export function getElementSizePT(element: SlidesV1.Schema$PageElement) {
     assert(element);
     assert(element.size?.height?.magnitude);
     assert(element.size?.width?.magnitude);
@@ -155,7 +157,7 @@ export function getElementSize(element: SlidesV1.Schema$PageElement) {
     assert(element.transform?.scaleY);
     const width = element.size.width.magnitude * element.transform?.scaleX;
     const height = element?.size?.height?.magnitude * element.transform?.scaleY;
-    return { width, height };
+    return { width: Math.round(convertEMUtoPT(width)), height: Math.round(convertEMUtoPT(height)) };
 }
 /**
  * @name findByKey
@@ -206,10 +208,10 @@ export function splitter(str: string, l: number): string[] {
 
 export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: string): number {
   // get the dimensions of the element
-  const size = getElementSize(element);
+  const size = getElementSizePT(element);
   // create a canvas with the same size as the element, this most likely does not matter as we're only measureing a fake
   // representation of the text with ctx.measureText
-  const canvas = createCanvas(convertPTtoPX(size.width), convertPTtoPX(size.height));
+  const canvas = createCanvas(10000, 10000);
   const ctx = canvas.getContext('2d');
   // try to extract all the font-sizes
   const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
@@ -226,36 +228,39 @@ export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: st
   // use the average fontSize if available, else start at an arbitrary default
   let fontSize = isNaN(averageFontSize) ? DEFAULT_FONT_SIZE : averageFontSize;
   // if the input value is an empty string, don't bother with any calculations
-  if (text.length === 0) {
-    return fontSize;
+  if (text.length === 0) { return fontSize; }
+
+  // max chars we will fit horizontally based on the average width of the first n chars
+  const getCharWidthPT = (): number => {
+    const numChars = 60;
+    const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
+    return Math.floor(size.width / convertPXtoPT(avgCharWidth));
   }
-  // create the initial font value, this is overwritten during the while loop
-  ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
-  // max chars we will fit horizontally based on the char width of W
-  const getCharWidth = (): number => convertPTtoPX(size.width) / ctx.measureText('W').width;
   // used for the while loop, to continually resize the shape and multiline text, until it fits within the bounds
   // of the element
   const isOutsideBounds = (): boolean => {
+    ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
     // based on the maximum amount of chars available in the horizontal axis for this font size
     // we split onto a new line to get the width/height correctly
-    const multiLineString = splitter(text, getCharWidth()).join('\n');
+    const multiLineString = splitter(text, getCharWidthPT()).join('\n');
     // get the measurements of the current multiline string
     const metrics = ctx.measureText(multiLineString);
-    // get the width in PT
-    const width = covertPXtoPT(metrics.width);
     // the emAcent/Decent values do exist, it's the types that are wrong from canvas
     // @ts-expect-error
     const emAcent = metrics.emHeightAscent as number;
     // @ts-expect-error
-    const emDecent = metrics.emHeightDescent as number;    const height = covertPXtoPT(emAcent + emDecent);
+    const emDecent = metrics.emHeightDescent as number;
+    // get dimensions in PT, and compare to element size
+    const height = convertPXtoPT(emAcent + emDecent);
+    const width  = convertPXtoPT(metrics.width);
+    console.log('at this fontSize, width is expected to be '+width+'pt, and height to be '+height+'pt');
     return width > size.width || height > size.height;
   };
   // continually loop over until the size of the text element is less than the intiial size of the element in gslides
   while (isOutsideBounds()) {
-    // decrease by 0.1 incrememnts until it fits within the width
-    fontSize = fontSize - 0.1;
+    // decrease by 0.1 increments until it fits within the width
+    fontSize = fontSize - 0.5;
     // update the ctx with the new font style (shrinking the font size)
-    ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
   }
   // returns the font size
   return fontSize;
