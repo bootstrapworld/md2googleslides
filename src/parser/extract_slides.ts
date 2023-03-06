@@ -377,7 +377,8 @@ fullTokenRules['html_block'] = (token, context) => {
   } else {
     subContext.startTextBlock();
   }
-  const tokens = parseMarkdown(match[1]);
+  // remove any tab characters, which are not allowed in markdown
+  const tokens = parseMarkdown(match[1].replaceAll('\t',''));
   processTokens(tokens, subContext);
   if (subContext.text && subContext.text.rawText.trim().length) {
     context.currentSlide.notes = subContext.text;

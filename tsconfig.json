@@ -7,7 +7,7 @@
     "isolatedModules": true,
     "strict": true,
     "module": "es2020",
-    "lib": ["ES2019"],
+    "lib": ["ES2021"],
     "noEmit": true,
     "moduleResolution": "node",
     "skipLibCheck": true
