@@ -48,6 +48,13 @@ deck, just get the ID of the already generated slides. For example, you can use 
 md2gslides slides.md --title "Talk Title" --append <some id> --erase
 ```
 
+You can specify a parent folder in which to store the presentation using the `--parent` or `-p` option"
+
+```
+# To store the new deck in https://drive.google.com/drive/u/0/folders/<some-id>
+md2gslides slides.md --title "Talk Title" --parent <some id>
+```
+
 ## Supported markdown rules
 
 md2gslides uses a subset of the [CommonMark](http://spec.commonmark.org/0.26/) and

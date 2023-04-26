@@ -133,13 +133,12 @@ export default class SlideGenerator {
     parentId: string = "",
   ): Promise<SlideGenerator> {
     const drive = google.drive({version: 'v3', auth: oauth2Client});
+    
     const res = await drive.files.copy({
       fileId: presentationId,
-      requestBody: {
-        name: title,
-        parents: [parentId]
-      },
+      requestBody: { name: title, parents: [parentId] }
     });
+
     assert(res.data.id);
     return SlideGenerator.forPresentation(oauth2Client, res.data.id);
   }

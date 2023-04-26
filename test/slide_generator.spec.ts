@@ -48,7 +48,7 @@ describe('SlideGenerator', () => {
     it('should create a presentation', () => {
       const generator = SlideGenerator.newPresentation(
         buildCredentials(),
-        'title'
+        'title',
       );
       return expect(generator).to.eventually.be.instanceof(SlideGenerator);
     });
