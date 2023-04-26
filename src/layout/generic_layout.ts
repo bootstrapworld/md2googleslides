@@ -603,7 +603,7 @@ export default class GenericLayout {
     };
   }
 
-  protected computeShallowFieldMask<T>(object: T): string {
+  protected computeShallowFieldMask<T extends object>(object: T): string {
     const fields = [];
     for (const field of Object.keys(object)) {
       if (object[field as keyof T] !== undefined) {
