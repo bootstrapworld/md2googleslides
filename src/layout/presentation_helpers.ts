@@ -234,7 +234,7 @@ export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: st
 
   // max chars we will fit horizontally based on the average width of the first n chars
   const getCharWidthPT = (): number => {
-    const numChars = 60;
+    const numChars = Math.min(text.length, 60);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
     return Math.floor(size.width / convertPXtoPT(avgCharWidth));
   }

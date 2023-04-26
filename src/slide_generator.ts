@@ -105,7 +105,8 @@ export default class SlideGenerator {
    */
   public static async newPresentation(
     oauth2Client: Auth.OAuth2Client,
-    title: string
+    title: string,
+    parentId: string = "",
   ): Promise<SlideGenerator> {
     const api = google.slides({version: 'v1', auth: oauth2Client});
     const res = await api.presentations.create({
@@ -128,13 +129,15 @@ export default class SlideGenerator {
   public static async copyPresentation(
     oauth2Client: Auth.OAuth2Client,
     title: string,
-    presentationId: string
+    presentationId: string,
+    parentId: string = "",
   ): Promise<SlideGenerator> {
     const drive = google.drive({version: 'v3', auth: oauth2Client});
     const res = await drive.files.copy({
       fileId: presentationId,
       requestBody: {
         name: title,
+        parents: [parentId]
       },
     });
     assert(res.data.id);

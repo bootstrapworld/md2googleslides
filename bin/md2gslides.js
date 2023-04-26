@@ -90,6 +90,11 @@ parser.add_argument('-t', '--title', {
   dest: 'title',
   required: false,
 });
+parser.add_argument('-p', '--parent', {
+  help: 'Id of the GDrive folder in which so save the presentation',
+  dest: 'parentId',
+  required: false,
+});
 parser.add_argument('-c', '--copy', {
   help: 'Id of the presentation to copy and use as a base',
   dest: 'copy',
@@ -170,13 +175,14 @@ function buildSlideGenerator(oauth2Client) {
   const title = args.title || args.file;
   const presentationId = args.id;
   const copyId = args.copy;
+  const parentId = args.parentId;
 
   if (presentationId) {
     return SlideGenerator.forPresentation(oauth2Client, presentationId);
   } else if (copyId) {
-    return SlideGenerator.copyPresentation(oauth2Client, title, copyId);
+    return SlideGenerator.copyPresentation(oauth2Client, title, copyId, parentId);
   } else {
-    return SlideGenerator.newPresentation(oauth2Client, title);
+    return SlideGenerator.newPresentation(oauth2Client, title, parentId);
   }
 }
 
