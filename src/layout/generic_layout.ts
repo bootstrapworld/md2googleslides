@@ -348,14 +348,14 @@ export default class GenericLayout {
         let box = that.getBodyBoundingBox(placeholder);
         const computedLayout = layer.export();
 
-        // assume we're just converting Pixels->EMU, but scale to fit if we have a placeholder
-        let scaleRatio = EMUperPixel;
-        if(!!placeholder) {
-          scaleRatio = Math.min(
-            box.width  / computedLayout.width,
-            box.height / computedLayout.height
-          );
-        }
+        // assume we're just converting Pixels->EMU, but scale to fit
+        // box will be the dimensions of the placeholder (if defined),
+        // or the entire slide
+        let scaleRatio = EMUperPixel;  
+        scaleRatio = Math.min(
+          box.width  / computedLayout.width,
+          box.height / computedLayout.height
+        );
         const scaledWidth  = computedLayout.width  * scaleRatio;
         const scaledHeight = computedLayout.height * scaleRatio;
 
