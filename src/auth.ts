@@ -15,7 +15,7 @@
 import Debug from 'debug';
 import {google, Auth} from 'googleapis';
 import path from 'path';
-import mkdirp from 'mkdirp';
+import {mkdirp} from 'mkdirp';
 import lowdb from 'lowdb';
 import FileSync from 'lowdb/adapters/FileSync.js';
 import Memory from 'lowdb/adapters/Memory.js';
