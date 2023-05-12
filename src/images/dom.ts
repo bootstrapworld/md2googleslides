@@ -42,7 +42,7 @@ async function renderDOM(image: ImageDefinition) {
   await browser.close();
 
   const path = await tmp.tmpName({postfix: '.png'});
-  await sharp(imageBuffer, {density: 2400}).png().toFile(path);
+  await sharp(imageBuffer).withMetadata({density: 2400}).resize({width: 1250}).png().toFile(path);
   return path;
 }
 
