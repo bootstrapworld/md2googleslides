@@ -109,7 +109,7 @@ export default class GenericLayout {
     }
 
     if (this.slide.tables.length) {
-      this.appendCreateTableRequests(this.slide.tables, requests);
+      this.slide.tables.forEach(t => this.appendCreateTableRequest(t, requests));
     }
 
     if (this.slide.bodies) {
@@ -483,14 +483,10 @@ export default class GenericLayout {
     });
   }
 
-  protected appendCreateTableRequests(
-    tables: TableDefinition[],
+  protected appendCreateTableRequest(
+    table: TableDefinition,
     requests: SlidesV1.Schema$Request[]
   ): void {
-    if (tables.length > 1) {
-      throw new Error('Multiple tables per slide are not supported.');
-    }
-    const table = tables[0];
     const tableId = uuid();
     let hasHeader = true;
 
