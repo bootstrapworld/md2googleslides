@@ -25,7 +25,7 @@ async function renderDOM(image: ImageDefinition) {
     </html>
     `;
   // create the browser, and set the content of the page
-  const browser = await puppeteer.launch({headless: true});
+  const browser = await puppeteer.launch({headless: 'new'});
   const page = await browser.newPage();
   await page.setContent(html);
 
