@@ -76,7 +76,7 @@
     "probe-image-size": "^7.2.3",
     "promise": "^8.0.3",
     "promise-retry": "^2.0.1",
-    "puppeteer": "^20.1.2",
+    "puppeteer": "^21.5.2",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "sharp": "^0.32.1",
