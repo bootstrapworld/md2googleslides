@@ -89,7 +89,11 @@ export default class GenericLayout {
   public appendContentRequests(
     requests: SlidesV1.Schema$Request[]
   ): SlidesV1.Schema$Request[] {
-    this.appendFillPlaceholderTextRequest(this.slide.title, 'TITLE', requests);
+    this.appendFillPlaceholderTextRequest(
+      this.slide.title, 
+      'TITLE', requests, 
+      "horizontal"
+    );
     this.appendFillPlaceholderTextRequest(
       this.slide.title,
       'CENTERED_TITLE',
@@ -134,7 +138,7 @@ export default class GenericLayout {
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
-        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, placeholder);
+        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests);
 
         if (body.images && body.images.length) {
           // send all the images, and just the first placeholder
@@ -171,7 +175,7 @@ export default class GenericLayout {
     value: TextDefinition | undefined,
     placeholder: string | SlidesV1.Schema$PageElement,
     requests: SlidesV1.Schema$Request[],
-    element?: SlidesV1.Schema$PageElement
+    constraints?: string
   ): void {
     if (!value) {
       debug('No text for placeholder %s');
@@ -191,11 +195,13 @@ export default class GenericLayout {
       }
       placeholder = pageElements[0];
     }
+
     this.appendInsertTextRequests(
       value,
       {objectId: placeholder.objectId},
       requests,
-      //element // passing the element turns on auto-fitting
+      constraints, // passing constraints turns on auto-fitting
+      placeholder
     );
   }
 
@@ -205,10 +211,9 @@ export default class GenericLayout {
       | Partial<SlidesV1.Schema$UpdateTextStyleRequest>
       | Partial<SlidesV1.Schema$CreateParagraphBulletsRequest>,
     requests: SlidesV1.Schema$Request[],
-    element? : SlidesV1.Schema$PageElement
+    constraints?: string,
+    placeholder?: SlidesV1.Schema$PageElement,
   ): void {
-
-    if(element) { console.error('@@@@@TRYING TO AUTOFIT'); }
 
     // Insert the raw text first
     const request = {
@@ -253,9 +258,8 @@ export default class GenericLayout {
               fontFamily: textRun.fontFamily,
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
-              // FOR NOW, AUTO-FITTING IS TURNED OFF VIA LINE 198
-              fontSize: (element && !textRun.fontSize)? {
-                magnitude: calculateFontSize(element, text.rawText),
+              fontSize: (placeholder && constraints && !textRun.fontSize)? {
+                magnitude: calculateFontSize(placeholder, text.rawText, constraints),
                 unit: 'PT'
               } : textRun.fontSize,
               link: textRun.link,

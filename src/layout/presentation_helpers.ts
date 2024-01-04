@@ -208,9 +208,16 @@ export function splitter(str: string, l: number): string[] {
   return strs;
 }
 
-export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: string): number {
+export function calculateFontSize(
+  element: SlidesV1.Schema$PageElement, 
+  text: string, 
+  constraints: string): number {
+
   // get the dimensions of the element
-  const size = getElementSizePT(element);
+  const sizePT = getElementSizePT(element);
+
+  //console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+
   // create a canvas with the same size as the element, this most likely does not matter as we're only measureing a fake
   // representation of the text with ctx.measureText
   const canvas = createCanvas(10000, 10000);
@@ -232,21 +239,27 @@ export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: st
   // if the input value is an empty string, don't bother with any calculations
   if (text.length === 0) { return fontSize; }
 
-  // max chars we will fit horizontally based on the average width of the first n chars
-  const getCharWidthPT = (): number => {
-    const numChars = Math.min(text.length, 60);
+  const WIDTH_ADJUSTMENT = 1.1;
+  const estCharsPerLine = (): number => {
+    const numChars = Math.min(text.length, 100);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
-    return Math.floor(size.width / convertPXtoPT(avgCharWidth));
+    return convertPTtoPX(sizePT.width) / (avgCharWidth * WIDTH_ADJUSTMENT);
   }
+
   // used for the while loop, to continually resize the shape and multiline text, until it fits within the bounds
   // of the element
   const isOutsideBounds = (): boolean => {
     ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
     // based on the maximum amount of chars available in the horizontal axis for this font size
     // we split onto a new line to get the width/height correctly
-    const multiLineString = splitter(text, getCharWidthPT()).join('\n');
+    const multiLineString = splitter(text, estCharsPerLine());
+
+    // if the only constraint is horizontal, we're outside bounds if there's more than one line
+    if ((constraints == "horizontal") && (multiLineString.length > 1)) {
+      return true;
+    }
     // get the measurements of the current multiline string
-    const metrics = ctx.measureText(multiLineString);
+    const metrics = ctx.measureText(multiLineString.join('\n'));
     // the emAcent/Decent values do exist, it's the types that are wrong from canvas
     // @ts-expect-error
     const emAcent = metrics.emHeightAscent as number;
@@ -255,14 +268,11 @@ export function calculateFontSize(element: SlidesV1.Schema$PageElement, text: st
     // get dimensions in PT, and compare to element size
     const height = convertPXtoPT(emAcent + emDecent);
     const width  = convertPXtoPT(metrics.width);
-    return width > size.width || height > size.height;
+    return width > sizePT.width || height > sizePT.height;
   };
-  // continually loop over until the size of the text element is less than the intiial size of the element in gslides
-  while (isOutsideBounds()) {
-    // decrease by 0.1 increments until it fits within the width
-    fontSize = fontSize - 0.5;
-    // update the ctx with the new font style (shrinking the font size)
-  }
-  // returns the font size
+  // continually loop over until the size of the text element is within bounds,
+  // decreasing by 0.25pt increments until it fits within the width
+  while (isOutsideBounds()) { fontSize = fontSize - 0.25; }
+  
   return fontSize;
 }
