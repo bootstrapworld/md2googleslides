@@ -29,6 +29,7 @@ import {
   findLayoutIdByName,
   findPlaceholder,
   findSpeakerNotesObjectId,
+  findParentObjectById,
   calculateFontSize,
 } from './presentation_helpers.js';
 import assert from 'assert';
@@ -91,7 +92,8 @@ export default class GenericLayout {
   ): SlidesV1.Schema$Request[] {
     this.appendFillPlaceholderTextRequest(
       this.slide.title, 
-      'TITLE', requests, 
+      'TITLE', 
+      requests, 
       "horizontal"
     );
     this.appendFillPlaceholderTextRequest(
@@ -181,7 +183,7 @@ export default class GenericLayout {
       debug('No text for placeholder %s');
       return;
     }
-    
+    var parent;
     if (typeof placeholder === 'string') {
       assert(this.slide.objectId);
       const pageElements = findPlaceholder(
@@ -194,6 +196,12 @@ export default class GenericLayout {
         return;
       }
       placeholder = pageElements[0];
+      const parentObjectId = placeholder?.shape?.placeholder?.parentObjectId;
+      if(!parentObjectId) {
+        debug('Skipping placeholder without a parentId %s', placeholder);
+      } else {
+        parent = findParentObjectById(this.presentation, parentObjectId);        
+      }
     }
 
     this.appendInsertTextRequests(
@@ -201,7 +209,7 @@ export default class GenericLayout {
       {objectId: placeholder.objectId},
       requests,
       constraints, // passing constraints turns on auto-fitting
-      placeholder
+      parent
     );
   }
 
@@ -212,7 +220,7 @@ export default class GenericLayout {
       | Partial<SlidesV1.Schema$CreateParagraphBulletsRequest>,
     requests: SlidesV1.Schema$Request[],
     constraints?: string,
-    placeholder?: SlidesV1.Schema$PageElement,
+    parent?: SlidesV1.Schema$PageElement,
   ): void {
 
     // Insert the raw text first
@@ -258,8 +266,8 @@ export default class GenericLayout {
               fontFamily: textRun.fontFamily,
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
-              fontSize: (placeholder && constraints && !textRun.fontSize)? {
-                magnitude: calculateFontSize(placeholder, text.rawText, constraints),
+              fontSize: (parent && constraints && !textRun.fontSize)? {
+                magnitude: calculateFontSize(parent, text.rawText, constraints),
                 unit: 'PT'
               } : textRun.fontSize,
               link: textRun.link,

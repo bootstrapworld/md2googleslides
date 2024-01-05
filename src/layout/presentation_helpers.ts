@@ -133,7 +133,20 @@ export function findSpeakerNotesObjectId(
   return undefined;
 }
 
-// Added be Emmanuel Schanzer 2/5/23
+// Added by Emmanuel Schanzer 1/4/24
+// given a parentId found in a placeholder, produce the
+// original element (used so we can extract the inherited properties)
+export function findParentObjectById(
+  presentation: SlidesV1.Schema$Presentation,
+  parentObjectId: string
+): SlidesV1.Schema$PageElement | undefined {
+  // flatten all the pageElts across all the layout, then search
+  const elts = presentation.layouts?.map(layout => layout.pageElements).flat();
+  return elts?.find(elt => elt?.objectId == parentObjectId);
+}
+
+
+// Added by Emmanuel Schanzer 2/5/23
 // based on code from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
 // this code had a few bugs, but more importantly we try to measure a sample of the actual text
 // instead of a single 'W' character
@@ -216,7 +229,8 @@ export function calculateFontSize(
   // get the dimensions of the element
   const sizePT = getElementSizePT(element);
 
-  //console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+
+  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
 
   // create a canvas with the same size as the element, this most likely does not matter as we're only measureing a fake
   // representation of the text with ctx.measureText
@@ -239,7 +253,7 @@ export function calculateFontSize(
   // if the input value is an empty string, don't bother with any calculations
   if (text.length === 0) { return fontSize; }
 
-  const WIDTH_ADJUSTMENT = 1.1;
+  const WIDTH_ADJUSTMENT = 1.15; // smaller adj = larger font
   const estCharsPerLine = (): number => {
     const numChars = Math.min(text.length, 100);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
