@@ -183,7 +183,6 @@ export default class GenericLayout {
       debug('No text for placeholder %s');
       return;
     }
-    var matchStyle; // the elt we want to match
     if (typeof placeholder === 'string') {
       assert(this.slide.objectId);
       const pageElements = findPlaceholder(

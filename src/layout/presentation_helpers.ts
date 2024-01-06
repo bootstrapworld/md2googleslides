@@ -156,14 +156,11 @@ export function findParentObject(
 }
 
 
-// Added by Emmanuel Schanzer 2/5/23
+// Code below added by Emmanuel Schanzer 
 // based on code from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
-// this code had a few bugs, but more importantly we try to measure a sample of the actual text
-// instead of a single 'W' character
-
-// ASSUMED DEFAULTS (all values are in PT unless otherwise specified)
-const DEFAULT_FONT_WEIGHT  = 'normal';
-const DEFAULT_FONT_SIZE    = 16;
+// - enhanced to use smarter calculation of average chars (use an avg'd sample instead of 'W')
+// - enhanced to use computed style objects (takes into acct indenting, lineSpacing, and more)
+// - enhanced to use a minimum font size
 
 // An English Metric Unit (EMU) is defined as 1/360,000 of a centimeter and thus there are 914,400 EMUs per inch, and 12,700 EMUs per point.
 export const convertEMUtoPT = (emu: number): number => emu / 12700;
@@ -259,16 +256,22 @@ const DEFAULT_STYLE = {
   spacingMode: 'NEVER_COLLAPSE'
 }
 
+const DEFAULT_PADDING = 0.2 * 72; // 72pt per inch, assume 0.1in padding on all sizes
+
 export function calculateFontSize(
   ancestors: SlidesV1.Schema$PageElement[],  // oldest-to-youngest
   text: string, 
   constraints: string): number {
 
-  // ancestor 0 is the elt we're trying to fit
-  const element = ancestors[0];
+  // the youngest (last) ancestor is the actual element we're trying to fit
+  const element = ancestors[ancestors.length-1];
   const sizePT = getElementSizePT(element);
 
-  //console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+  // adjust the size to account for space lost to padding
+  sizePT.width -= DEFAULT_PADDING;
+  sizePT.height -= DEFAULT_PADDING;
+
+  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
 
   // create a canvas with the same size as the element, this most likely does not matter as we're only measuring a fake
   // representation of the text with ctx.measureText
@@ -293,20 +296,19 @@ export function calculateFontSize(
   const averageFontWeight = fontWeights.reduce((a, n) => a + n, 0) / fontWeights.length;
   const averageFontSize = fontSizes.reduce((a, n) => a + n, 0) / fontSizes.length;
   // if the average font-weight is not a number, usae the default
-  const fontWeight = isNaN(averageFontWeight) ? DEFAULT_FONT_WEIGHT : averageFontWeight;
+  const fontWeight = isNaN(averageFontWeight) ? computedStyle.weightedFontFamily.weight : averageFontWeight;
   // use the average fontSize if available, else start at an arbitrary default
   let fontSize = isNaN(averageFontSize) ? computedStyle.fontSize.magnitude : averageFontSize;
   // if the input value is an empty string, don't bother with any calculations
   if (text.length === 0) { return fontSize; }
 
   const MIN_FONT_SIZE = 12;
-
-  const WIDTH_ADJUSTMENT = 1.15; // smaller adj = larger font
+  const WTF_UGLY_TITLE_HACK = (constraints=="horizontal")? 1.15 : 1;
 
   const estCharsPerLine = (): number => {
     const numChars = Math.min(text.length, 100);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
-    return convertPTtoPX(sizePT.width) / (avgCharWidth * WIDTH_ADJUSTMENT);
+    return convertPTtoPX(sizePT.width) / (avgCharWidth * WTF_UGLY_TITLE_HACK);
   }
 
   // convenience function: given a property, get its magnitude or produce zero
