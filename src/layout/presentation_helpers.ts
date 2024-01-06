@@ -219,7 +219,7 @@ export function splitter(str: string, l: number): string[] {
   while (str.length > l) {
       let pos = str.substring(0, l).lastIndexOf(' ');
       pos = pos <= 0 ? l : pos;
-      strs.push(str.substring(0, pos));
+      strs.push(...str.substring(0, pos).split('\n'));
       let i = str.indexOf(' ', pos) + 1;
       if (i < pos || i > pos + l)
           i = pos;
@@ -250,14 +250,18 @@ const DEFAULT_STYLE = {
   indentStart: { magnitude: 0, unit: 'PT' },
   indentEnd:   { magnitude: 0, unit: 'PT' },
   spaceAbove:  { magnitude: 0, unit: 'PT' },
-  spaceBelow: { magnitude: 16, unit: 'PT' },
+  spaceBelow:  { magnitude: 0, unit: 'PT' },
   indentFirstLine: { magnitude: 0, unit: 'PT' },
   direction: 'LEFT_TO_RIGHT',
   spacingMode: 'NEVER_COLLAPSE'
 }
 
-const DEFAULT_PADDING = 0.2 * 72; // 72pt per inch, assume 0.1in padding on all sizes
+const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all sizes
 
+// in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
+const WTF_CHAR_WIDTH_HACK = 1.15; 
+
+  
 export function calculateFontSize(
   ancestors: SlidesV1.Schema$PageElement[],  // oldest-to-youngest
   text: string, 
@@ -267,26 +271,24 @@ export function calculateFontSize(
   const element = ancestors[ancestors.length-1];
   const sizePT = getElementSizePT(element);
 
+  // create a canvas with the same size as the element, this most likely does not matter as we're only measuring a fake
+  // representation of the text with ctx.measureText
+  const canvas = createCanvas(sizePT.width, sizePT.height);
+  const ctx = canvas.getContext('2d');
+
   // adjust the size to account for space lost to padding
   sizePT.width -= DEFAULT_PADDING;
   sizePT.height -= DEFAULT_PADDING;
-
-  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
-
-  // create a canvas with the same size as the element, this most likely does not matter as we're only measuring a fake
-  // representation of the text with ctx.measureText
-  const canvas = createCanvas(10000, 10000);
-  const ctx = canvas.getContext('2d');
-  // try to extract all the font-sizes
-  const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
   
-  // get the first textElement of each ancestor (use '.at' instead of '[n]' to salvage the ? operator)
-  // then merge the pmarkers from oldest to youngest, so children can override parents
-  const pmarkers = ancestors.map(a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style);
-  const computedStyle = Object.assign({}, DEFAULT_STYLE, ...pmarkers);
-
+  // starting with the default, merge style rules from oldest-to-youngest
+  const computedStyle = Object.assign(
+    {}, DEFAULT_STYLE, // use '.at' instead of '[n]' below to salvage the ? operator
+    ...ancestors.map(a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style)
+  );
   //console.log('inheritedProps', computedStyle)
 
+  // try to extract all the font-sizes
+  const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
   // try to extract all the font-weights
   const fontWeights = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.weightedFontFamily?.weight).filter((a): a is number => Number.isInteger(a)) ?? [];
   // fallback to arial if not found, if there's more than one fontFamily used in a single element, we just pick the first one, no way i can think of
@@ -302,13 +304,10 @@ export function calculateFontSize(
   // if the input value is an empty string, don't bother with any calculations
   if (text.length === 0) { return fontSize; }
 
-  const MIN_FONT_SIZE = 12;
-  const WTF_UGLY_TITLE_HACK = (constraints=="horizontal")? 1.15 : 1;
-
   const estCharsPerLine = (): number => {
     const numChars = Math.min(text.length, 100);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
-    return convertPTtoPX(sizePT.width) / (avgCharWidth * WTF_UGLY_TITLE_HACK);
+    return convertPTtoPX(sizePT.width) / (avgCharWidth * WTF_CHAR_WIDTH_HACK);
   }
 
   // convenience function: given a property, get its magnitude or produce zero
@@ -318,9 +317,11 @@ export function calculateFontSize(
   // of the element
   const isOutsideBounds = (): boolean => {
     ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
-    // based on the maximum amount of chars available in the horizontal axis for this font size
-    // we split onto a new line to get the width/height correctly
+    
+    // # of hard AND wrapped lines - computed using the estimated chars per line at this font size
+    // # of newlines - relevant for spaceAbove/spaceBelow/spaceBetween calculation
     const lines = splitter(text, estCharsPerLine());
+    const newlines = text.match(/\\n/g)?.length || 1;
 
     // if the only constraint is horizontal, we're outside bounds if there's more than one line
     if ((constraints == "horizontal") && (lines.length > 1)) {
@@ -329,10 +330,10 @@ export function calculateFontSize(
 
     // compute the horizontal and vertical whitespace in PT
     // Horizontal: <indentStart> + <indentEnd>
-    // Vertical: <space below and after all n lines> + <spacing between each line (n-1)>
+    // Vertical: <space below and above all n linebreaks> + <spacing between each line (n-1)>
     const horizontalWhiteSpace = amountPT("indentStart") + amountPT("indentEnd");
-    const spaceAroundLines = lines.length * (amountPT("spaceBelow") + amountPT("spaceAbove"))
-    const spaceBetweenLines = (lines.length-1) * (computedStyle.lineSpacing/100 * fontSize)
+    const spaceAroundLines = newlines * (amountPT("spaceBelow") + amountPT("spaceAbove"))
+    const spaceBetweenLines = (newlines-1) * (computedStyle.lineSpacing/100 * fontSize)
     const verticalWhiteSpace = spaceAroundLines + spaceBetweenLines;
 
     // get the measurements of the current multiline string
@@ -345,12 +346,15 @@ export function calculateFontSize(
     // get dimensions in PT, and compare to element size
     const height = convertPXtoPT(emAcent + emDecent) + verticalWhiteSpace;
     const width  = convertPXtoPT(metrics.width) + horizontalWhiteSpace;
-    //console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
+    console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
     return width > sizePT.width || height > sizePT.height;
   };
+
+  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+
   // continually loop over until the size of the text element is within bounds,
   // decreasing by 0.25pt increments until it fits within the width
-  while (isOutsideBounds() && (fontSize > MIN_FONT_SIZE)) { fontSize = fontSize - 0.25; }
+  while (isOutsideBounds()) { fontSize = fontSize - 0.25; }
   
   return fontSize;
 }
