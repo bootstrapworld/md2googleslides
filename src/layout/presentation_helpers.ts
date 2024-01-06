@@ -134,15 +134,25 @@ export function findSpeakerNotesObjectId(
 }
 
 // Added by Emmanuel Schanzer 1/4/24
-// given a parentId found in a placeholder, produce the
-// original element (used so we can extract the inherited properties)
-export function findParentObjectById(
+// Given a PageElement, produce the parent element so we can extract the inherited properties
+// if there's no parent, return undefined.
+export function findParentObject(
   presentation: SlidesV1.Schema$Presentation,
-  parentObjectId: string
+  pageElement: SlidesV1.Schema$PageElement,
 ): SlidesV1.Schema$PageElement | undefined {
-  // flatten all the pageElts across all the layout, then search
-  const elts = presentation.layouts?.map(layout => layout.pageElements).flat();
-  return elts?.find(elt => elt?.objectId == parentObjectId);
+
+  // if it's a placeholder, lookup the parent shape whose style we need to match
+  const parentObjectId = pageElement?.shape?.placeholder?.parentObjectId;
+  if(parentObjectId) {
+    // flatten all the pageElts across all slides, masters, and layouts, then search
+    return presentation.slides?.map(_ => _.pageElements)
+      .concat(presentation.masters?.map(_ => _.pageElements))
+      .concat(presentation.layouts?.map(_ => _.pageElements))
+      .flat()
+      .find(elt => elt?.objectId == parentObjectId);    
+  } else {
+    return;
+  }
 }
 
 
@@ -151,8 +161,9 @@ export function findParentObjectById(
 // this code had a few bugs, but more importantly we try to measure a sample of the actual text
 // instead of a single 'W' character
 
-const DEFAULT_FONT_WEIGHT = 'normal';
-const DEFAULT_FONT_SIZE = 16;
+// ASSUMED DEFAULTS (all values are in PT unless otherwise specified)
+const DEFAULT_FONT_WEIGHT  = 'normal';
+const DEFAULT_FONT_SIZE    = 16;
 
 // An English Metric Unit (EMU) is defined as 1/360,000 of a centimeter and thus there are 914,400 EMUs per inch, and 12,700 EMUs per point.
 export const convertEMUtoPT = (emu: number): number => emu / 12700;
@@ -221,23 +232,58 @@ export function splitter(str: string, l: number): string[] {
   return strs;
 }
 
+// An amalgamation of text and paragraph style objects, whose fields do not overlap
+// used when computing the measurements of a textRun, which are impacted by fields from both
+// irrelevant fields like color are included for completeness
+const DEFAULT_STYLE = {
+  backgroundColor: {},
+  foregroundColor: {},
+  bold: false,
+  italic: false,
+  fontFamily: "Arial",
+  fontSize: { magnitude: 16, unit: 'PT' },
+  link: undefined,
+  baselineOffset: 0,
+  smallCaps: false,
+  strikethrough: false,
+  underline: false,
+  weightedFontFamily: { fontFamily: "Arial", weight: 400 },
+  lineSpacing: 115, // % of line height (115 = 14pt lines are separated by 14pt*115%)
+  alignment: 'START',
+  indentStart: { magnitude: 0, unit: 'PT' },
+  indentEnd:   { magnitude: 0, unit: 'PT' },
+  spaceAbove:  { magnitude: 0, unit: 'PT' },
+  spaceBelow: { magnitude: 16, unit: 'PT' },
+  indentFirstLine: { magnitude: 0, unit: 'PT' },
+  direction: 'LEFT_TO_RIGHT',
+  spacingMode: 'NEVER_COLLAPSE'
+}
+
 export function calculateFontSize(
-  element: SlidesV1.Schema$PageElement, 
+  ancestors: SlidesV1.Schema$PageElement[],  // oldest-to-youngest
   text: string, 
   constraints: string): number {
 
-  // get the dimensions of the element
+  // ancestor 0 is the elt we're trying to fit
+  const element = ancestors[0];
   const sizePT = getElementSizePT(element);
 
+  //console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
 
-  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
-
-  // create a canvas with the same size as the element, this most likely does not matter as we're only measureing a fake
+  // create a canvas with the same size as the element, this most likely does not matter as we're only measuring a fake
   // representation of the text with ctx.measureText
   const canvas = createCanvas(10000, 10000);
   const ctx = canvas.getContext('2d');
   // try to extract all the font-sizes
   const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
+  
+  // get the first textElement of each ancestor (use '.at' instead of '[n]' to salvage the ? operator)
+  // then merge the pmarkers from oldest to youngest, so children can override parents
+  const pmarkers = ancestors.map(a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style);
+  const computedStyle = Object.assign({}, DEFAULT_STYLE, ...pmarkers);
+
+  //console.log('inheritedProps', computedStyle)
+
   // try to extract all the font-weights
   const fontWeights = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.weightedFontFamily?.weight).filter((a): a is number => Number.isInteger(a)) ?? [];
   // fallback to arial if not found, if there's more than one fontFamily used in a single element, we just pick the first one, no way i can think of
@@ -249,16 +295,22 @@ export function calculateFontSize(
   // if the average font-weight is not a number, usae the default
   const fontWeight = isNaN(averageFontWeight) ? DEFAULT_FONT_WEIGHT : averageFontWeight;
   // use the average fontSize if available, else start at an arbitrary default
-  let fontSize = isNaN(averageFontSize) ? DEFAULT_FONT_SIZE : averageFontSize;
+  let fontSize = isNaN(averageFontSize) ? computedStyle.fontSize.magnitude : averageFontSize;
   // if the input value is an empty string, don't bother with any calculations
   if (text.length === 0) { return fontSize; }
 
+  const MIN_FONT_SIZE = 12;
+
   const WIDTH_ADJUSTMENT = 1.15; // smaller adj = larger font
+
   const estCharsPerLine = (): number => {
     const numChars = Math.min(text.length, 100);
     const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
     return convertPTtoPX(sizePT.width) / (avgCharWidth * WIDTH_ADJUSTMENT);
   }
+
+  // convenience function: given a property, get its magnitude or produce zero
+  function amountPT(prop:string){ return computedStyle[prop].magnitude || 0; }
 
   // used for the while loop, to continually resize the shape and multiline text, until it fits within the bounds
   // of the element
@@ -266,27 +318,37 @@ export function calculateFontSize(
     ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
     // based on the maximum amount of chars available in the horizontal axis for this font size
     // we split onto a new line to get the width/height correctly
-    const multiLineString = splitter(text, estCharsPerLine());
+    const lines = splitter(text, estCharsPerLine());
 
     // if the only constraint is horizontal, we're outside bounds if there's more than one line
-    if ((constraints == "horizontal") && (multiLineString.length > 1)) {
+    if ((constraints == "horizontal") && (lines.length > 1)) {
       return true;
     }
+
+    // compute the horizontal and vertical whitespace in PT
+    // Horizontal: <indentStart> + <indentEnd>
+    // Vertical: <space below and after all n lines> + <spacing between each line (n-1)>
+    const horizontalWhiteSpace = amountPT("indentStart") + amountPT("indentEnd");
+    const spaceAroundLines = lines.length * (amountPT("spaceBelow") + amountPT("spaceAbove"))
+    const spaceBetweenLines = (lines.length-1) * (computedStyle.lineSpacing/100 * fontSize)
+    const verticalWhiteSpace = spaceAroundLines + spaceBetweenLines;
+
     // get the measurements of the current multiline string
-    const metrics = ctx.measureText(multiLineString.join('\n'));
+    const metrics = ctx.measureText(lines.join('\n'));
     // the emAcent/Decent values do exist, it's the types that are wrong from canvas
     // @ts-expect-error
     const emAcent = metrics.emHeightAscent as number;
     // @ts-expect-error
     const emDecent = metrics.emHeightDescent as number;
     // get dimensions in PT, and compare to element size
-    const height = convertPXtoPT(emAcent + emDecent);
-    const width  = convertPXtoPT(metrics.width);
+    const height = convertPXtoPT(emAcent + emDecent) + verticalWhiteSpace;
+    const width  = convertPXtoPT(metrics.width) + horizontalWhiteSpace;
+    //console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
     return width > sizePT.width || height > sizePT.height;
   };
   // continually loop over until the size of the text element is within bounds,
   // decreasing by 0.25pt increments until it fits within the width
-  while (isOutsideBounds()) { fontSize = fontSize - 0.25; }
+  while (isOutsideBounds() && (fontSize > MIN_FONT_SIZE)) { fontSize = fontSize - 0.25; }
   
   return fontSize;
 }

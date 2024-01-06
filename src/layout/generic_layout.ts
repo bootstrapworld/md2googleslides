@@ -29,7 +29,7 @@ import {
   findLayoutIdByName,
   findPlaceholder,
   findSpeakerNotesObjectId,
-  findParentObjectById,
+  findParentObject,
   calculateFontSize,
 } from './presentation_helpers.js';
 import assert from 'assert';
@@ -123,7 +123,7 @@ export default class GenericLayout {
       const bodyElements = findPlaceholder(
         this.presentation,
         this.slide.objectId,
-        'BODY'
+        'BODY',
       );
       const bodyCount = Math.min(
         bodyElements?.length ?? 0,
@@ -140,7 +140,7 @@ export default class GenericLayout {
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
-        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests);
+        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, "vertical");
 
         if (body.images && body.images.length) {
           // send all the images, and just the first placeholder
@@ -183,7 +183,7 @@ export default class GenericLayout {
       debug('No text for placeholder %s');
       return;
     }
-    var parent;
+    var matchStyle; // the elt we want to match
     if (typeof placeholder === 'string') {
       assert(this.slide.objectId);
       const pageElements = findPlaceholder(
@@ -196,12 +196,14 @@ export default class GenericLayout {
         return;
       }
       placeholder = pageElements[0];
-      const parentObjectId = placeholder?.shape?.placeholder?.parentObjectId;
-      if(!parentObjectId) {
-        debug('Skipping placeholder without a parentId %s', placeholder);
-      } else {
-        parent = findParentObjectById(this.presentation, parentObjectId);        
-      }
+    }
+
+    // compute an array of ancestor elts, from oldest-to-youngest
+    let ancestors = [];
+    let parentObject = findParentObject(this.presentation, placeholder);
+    while (parentObject) {
+      ancestors.unshift(parentObject); // add to beginning
+      parentObject = findParentObject(this.presentation, parentObject);
     }
 
     this.appendInsertTextRequests(
@@ -209,7 +211,7 @@ export default class GenericLayout {
       {objectId: placeholder.objectId},
       requests,
       constraints, // passing constraints turns on auto-fitting
-      parent
+      ancestors
     );
   }
 
@@ -220,7 +222,7 @@ export default class GenericLayout {
       | Partial<SlidesV1.Schema$CreateParagraphBulletsRequest>,
     requests: SlidesV1.Schema$Request[],
     constraints?: string,
-    parent?: SlidesV1.Schema$PageElement,
+    ancestors?: SlidesV1.Schema$PageElement[],
   ): void {
 
     // Insert the raw text first
@@ -236,6 +238,7 @@ export default class GenericLayout {
 
     // how much WS did we trim? We'll need to adjust textRuns
     const startingWhitespace = text.rawText.search(/\S/);
+
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
@@ -266,8 +269,8 @@ export default class GenericLayout {
               fontFamily: textRun.fontFamily,
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
-              fontSize: (parent && constraints && !textRun.fontSize)? {
-                magnitude: calculateFontSize(parent, text.rawText, constraints),
+              fontSize: (ancestors?.length && constraints && !textRun.fontSize)? {
+                magnitude: calculateFontSize(ancestors, text.rawText, constraints),
                 unit: 'PT'
               } : textRun.fontSize,
               link: textRun.link,
