@@ -15,6 +15,7 @@
 import {slides_v1 as SlidesV1} from 'googleapis';
 import { createCanvas } from 'canvas';
 import assert from 'assert';
+import { TextDefinition } from '../slides.js'
 
 export interface Dimensions {
   width: number;
@@ -133,6 +134,8 @@ export function findSpeakerNotesObjectId(
   return undefined;
 }
 
+export const pageElementMap = new Map();
+
 // Added by Emmanuel Schanzer 1/4/24
 // Given a PageElement, produce the parent element so we can extract the inherited properties
 // if there's no parent, return undefined.
@@ -143,16 +146,7 @@ export function findParentObject(
 
   // if it's a placeholder, lookup the parent shape whose style we need to match
   const parentObjectId = pageElement?.shape?.placeholder?.parentObjectId;
-  if(parentObjectId) {
-    // flatten all the pageElts across all slides, masters, and layouts, then search
-    return presentation.slides?.map(_ => _.pageElements)
-      .concat(presentation.masters?.map(_ => _.pageElements))
-      .concat(presentation.layouts?.map(_ => _.pageElements))
-      .flat()
-      .find(elt => elt?.objectId == parentObjectId);    
-  } else {
-    return;
-  }
+  return pageElementMap.get(parentObjectId);
 }
 
 
@@ -261,24 +255,33 @@ const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all
 // in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
 const WTF_CHAR_WIDTH_HACK = 1.15; 
 
+// NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
+const cachedFontCalculations = new Map();
   
 export function calculateFontSize(
   ancestors: SlidesV1.Schema$PageElement[],  // oldest-to-youngest
-  text: string, 
+  text: TextDefinition,
   constraints: string): number {
 
   // the youngest (last) ancestor is the actual element we're trying to fit
   const element = ancestors[ancestors.length-1];
+
+  // check to see if we've already done this work
+  // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
+  const key = text.rawText + element.objectId;
+  if(cachedFontCalculations.has(key)) { 
+    return cachedFontCalculations.get(key); 
+  }
+
+  // Dreate a canvas with the same size as the element. This probably doesn't matter,
+  // as we're only measuring a fake representation of the text with ctx.measureText
   const sizePT = getElementSizePT(element);
-
-  // create a canvas with the same size as the element, this most likely does not matter as we're only measuring a fake
-  // representation of the text with ctx.measureText
-  const canvas = createCanvas(sizePT.width, sizePT.height);
-  const ctx = canvas.getContext('2d');
-
   // adjust the size to account for space lost to padding
   sizePT.width -= DEFAULT_PADDING;
   sizePT.height -= DEFAULT_PADDING;
+  const canvas = createCanvas(sizePT.width, sizePT.height);
+  const ctx = canvas.getContext('2d');
+
   
   // starting with the default, merge style rules from oldest-to-youngest
   const computedStyle = Object.assign(
@@ -293,35 +296,35 @@ export function calculateFontSize(
   const fontWeights = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.weightedFontFamily?.weight).filter((a): a is number => Number.isInteger(a)) ?? [];
   // fallback to arial if not found, if there's more than one fontFamily used in a single element, we just pick the first one, no way i can think of
   // to be smart here and not really necessary to create multiple strings with different fonts and calculate those, this seems to work fine
-  const fontFamily = findByKey(element, 'fontFamily') ?? 'Arial';
+  const fontFamily = findByKey(element, 'fontFamily') ?? computedStyle.fontFamily;
   // calulate the average as there can be different fonts with different weights within a single text element
   const averageFontWeight = fontWeights.reduce((a, n) => a + n, 0) / fontWeights.length;
   const averageFontSize = fontSizes.reduce((a, n) => a + n, 0) / fontSizes.length;
-  // if the average font-weight is not a number, usae the default
+  // if the average font-weight is not a number, use the default
   const fontWeight = isNaN(averageFontWeight) ? computedStyle.weightedFontFamily.weight : averageFontWeight;
   // use the average fontSize if available, else start at an arbitrary default
   let fontSize = isNaN(averageFontSize) ? computedStyle.fontSize.magnitude : averageFontSize;
   // if the input value is an empty string, don't bother with any calculations
-  if (text.length === 0) { return fontSize; }
+  if (text.rawText.length === 0) { return fontSize; }
 
   const estCharsPerLine = (): number => {
-    const numChars = Math.min(text.length, 100);
-    const avgCharWidth = ctx.measureText(text.substring(0, numChars)).width / numChars;
+    const numChars = Math.min(text.rawText.length, 100);
+    const avgCharWidth = ctx.measureText(text.rawText.substring(0, numChars)).width / numChars;
     return convertPTtoPX(sizePT.width) / (avgCharWidth * WTF_CHAR_WIDTH_HACK);
   }
 
   // convenience function: given a property, get its magnitude or produce zero
   function amountPT(prop:string){ return computedStyle[prop].magnitude || 0; }
 
-  // used for the while loop, to continually resize the shape and multiline text, until it fits within the bounds
-  // of the element
+  // used for the while loop, to continually resize the shape and multiline
+  // text, until it fits within the bounds of the element
   const isOutsideBounds = (): boolean => {
     ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
     
-    // # of hard AND wrapped lines - computed using the estimated chars per line at this font size
+    // # of hard AND wrapped lines - computed using the estimated chars per line at this size
     // # of newlines - relevant for spaceAbove/spaceBelow/spaceBetween calculation
-    const lines = splitter(text, estCharsPerLine());
-    const newlines = text.match(/\\n/g)?.length || 1;
+    const lines = splitter(text.rawText, estCharsPerLine());
+    const newlines = text.rawText.match(/\\n/g)?.length || 1;
 
     // if the only constraint is horizontal, we're outside bounds if there's more than one line
     if ((constraints == "horizontal") && (lines.length > 1)) {
@@ -346,15 +349,16 @@ export function calculateFontSize(
     // get dimensions in PT, and compare to element size
     const height = convertPXtoPT(emAcent + emDecent) + verticalWhiteSpace;
     const width  = convertPXtoPT(metrics.width) + horizontalWhiteSpace;
-    console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
+    //console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
     return width > sizePT.width || height > sizePT.height;
   };
 
-  console.log(`fitting "${text}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+  //console.log(`fitting "${text.rawText}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
 
   // continually loop over until the size of the text element is within bounds,
   // decreasing by 0.25pt increments until it fits within the width
   while (isOutsideBounds()) { fontSize = fontSize - 0.25; }
   
+  cachedFontCalculations.set(key, fontSize);
   return fontSize;
 }

@@ -26,6 +26,7 @@ import {
   VideoDefinition,
 } from '../slides.js';
 import {
+  pageElementMap,
   findLayoutIdByName,
   findPlaceholder,
   findSpeakerNotesObjectId,
@@ -63,6 +64,9 @@ export default class GenericLayout {
     this.name = name;
     this.presentation = presentation;
     this.slide = slide;
+    presentation.slides?.forEach(e => pageElementMap.set(e.objectId, e));
+    presentation.masters?.forEach(e => pageElementMap.set(e.objectId, e));
+    presentation.layouts?.forEach(e => pageElementMap.set(e.objectId, e));
   }
 
   public appendCreateSlideRequest(
@@ -269,7 +273,7 @@ export default class GenericLayout {
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
               fontSize: (ancestors?.length && constraints && !textRun.fontSize)? {
-                magnitude: calculateFontSize(ancestors, text.rawText, constraints),
+                magnitude: calculateFontSize(ancestors, text, constraints),
                 unit: 'PT'
               } : textRun.fontSize,
               link: textRun.link,
