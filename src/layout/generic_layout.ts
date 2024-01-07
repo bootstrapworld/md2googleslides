@@ -26,11 +26,9 @@ import {
   VideoDefinition,
 } from '../slides.js';
 import {
-  pageElementMap,
   findLayoutIdByName,
   findPlaceholder,
   findSpeakerNotesObjectId,
-  findParentObject,
   calculateFontSize,
 } from './presentation_helpers.js';
 import assert from 'assert';
@@ -64,9 +62,27 @@ export default class GenericLayout {
     this.name = name;
     this.presentation = presentation;
     this.slide = slide;
-    presentation.slides?.forEach(e => pageElementMap.set(e.objectId, e));
-    presentation.masters?.forEach(e => pageElementMap.set(e.objectId, e));
-    presentation.layouts?.forEach(e => pageElementMap.set(e.objectId, e));
+
+    const addPageEltsToMap = (page:SlidesV1.Schema$Page) => {
+      page?.pageElements?.forEach(e => this.pageElementMap.set(e.objectId, e));
+    }
+    presentation.slides?.forEach(addPageEltsToMap);
+    presentation.masters?.forEach(addPageEltsToMap);
+    presentation.layouts?.forEach(addPageEltsToMap);
+  }
+
+  private pageElementMap = new Map();
+
+  // Added by Emmanuel Schanzer 1/4/24
+  // Given a PageElement, produce the parent element so we can extract the inherited properties
+  // if there's no parent, return undefined.
+  private findParentObject(
+    pageElement: SlidesV1.Schema$PageElement,
+  ): SlidesV1.Schema$PageElement | undefined {
+
+    // if it's a placeholder, lookup the parent shape whose style we need to match
+    const parentObjectId = pageElement?.shape?.placeholder?.parentObjectId;
+    return this.pageElementMap.get(parentObjectId);
   }
 
   public appendCreateSlideRequest(
@@ -203,10 +219,10 @@ export default class GenericLayout {
 
     // compute an array of ancestor elts, from oldest-to-youngest
     let ancestors = [];
-    let parentObject = findParentObject(this.presentation, placeholder);
+    let parentObject = this.findParentObject(placeholder);
     while (parentObject) {
       ancestors.unshift(parentObject); // add to beginning
-      parentObject = findParentObject(this.presentation, parentObject);
+      parentObject = this.findParentObject(parentObject);
     }
 
     this.appendInsertTextRequests(

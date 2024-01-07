@@ -134,22 +134,6 @@ export function findSpeakerNotesObjectId(
   return undefined;
 }
 
-export const pageElementMap = new Map();
-
-// Added by Emmanuel Schanzer 1/4/24
-// Given a PageElement, produce the parent element so we can extract the inherited properties
-// if there's no parent, return undefined.
-export function findParentObject(
-  presentation: SlidesV1.Schema$Presentation,
-  pageElement: SlidesV1.Schema$PageElement,
-): SlidesV1.Schema$PageElement | undefined {
-
-  // if it's a placeholder, lookup the parent shape whose style we need to match
-  const parentObjectId = pageElement?.shape?.placeholder?.parentObjectId;
-  return pageElementMap.get(parentObjectId);
-}
-
-
 // Code below added by Emmanuel Schanzer 
 // based on code from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
 // - enhanced to use smarter calculation of average chars (use an avg'd sample instead of 'W')
