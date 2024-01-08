@@ -13,28 +13,32 @@
 // limitations under the License.
 
 import Debug from 'debug';
-// @ts-ignore
-import mathJax from 'mathjax-node';
+
+import { mathjax } from 'mathjax-full/js/mathjax.js'
+import { TeX } from 'mathjax-full/js/input/tex.js'
+import { SVG } from 'mathjax-full/js/output/svg.js'
+import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
+import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
+import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
 import renderSVG from './svg.js';
 import {ImageDefinition} from '../slides.js';
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
-let mathJaxInitialized = false;
 
-function lazyInitMathJax(): void {
-  if (mathJaxInitialized) {
-    return;
-  }
-  mathJax.config({
-    MathJax: {
-      SVG: {
-        scale: 500,
-      },
-    },
-  });
-  mathJax.start();
-  mathJaxInitialized = true;
+
+const adaptor = liteAdaptor()
+RegisterHTMLHandler(adaptor)
+
+const mathjax_document = mathjax.document('', {
+  InputJax: new TeX({ packages: AllPackages }),
+  OutputJax: new SVG({ fontCache: 'local' })
+})
+
+
+export function get_mathjax_svg(math: string): string {
+  const node = mathjax_document.convert(math)
+  return adaptor.innerHTML(node)
 }
 
 function formatFor(expression: string): string {
@@ -61,13 +65,8 @@ function addOrMergeStyles(svg: string, style?: string): string {
 async function renderMathJax(image: ImageDefinition): Promise<string> {
   debug('Generating math image: %O', image);
   assert(image.source);
-  lazyInitMathJax();
-  const out = await mathJax.typeset({
-    math: image.source,
-    format: formatFor(image.source),
-    svg: true,
-  });
-  image.source = addOrMergeStyles(out.svg, image.style);
+  const svg = get_mathjax_svg(image.source);
+  image.source = addOrMergeStyles(svg, image.style);
   image.type = 'svg';
   return await renderSVG(image);
 }
