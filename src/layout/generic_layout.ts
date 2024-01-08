@@ -244,6 +244,11 @@ export default class GenericLayout {
     ancestors?: SlidesV1.Schema$PageElement[],
   ): void {
 
+    // make sure there's text to insert
+    if(text.rawText.trimLeft().length == 0) {
+      return; // empty requests are invalid, so don't bother
+    }
+
     // Insert the raw text first
     const request = {
       insertText: extend(
