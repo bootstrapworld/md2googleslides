@@ -14,7 +14,6 @@
 
 import Debug from 'debug';
 import {v1 as uuid} from 'uuid';
-import extend from 'extend';
 // @ts-ignore
 import Layout from 'layout';
 import {slides_v1 as SlidesV1} from 'googleapis';
@@ -251,7 +250,7 @@ export default class GenericLayout {
 
     // Insert the raw text first
     const request = {
-      insertText: extend(
+      insertText: Object.assign(
         {
           text: text.rawText.trimLeft(), // trim any starting whitespace
         },
@@ -275,7 +274,7 @@ export default class GenericLayout {
         throw "invalid textRun";
       }
       const request: SlidesV1.Schema$Request = {
-        updateTextStyle: extend(
+        updateTextStyle: Object.assign(
           {
             textRange: {
               type: 'FIXED_RANGE',
@@ -320,7 +319,7 @@ export default class GenericLayout {
     // Processing in the reverse order avoids having to readjust indices.
     for (const listMarker of text.listMarkers.reverse()) {
       const request = {
-        createParagraphBullets: extend(
+        createParagraphBullets: Object.assign(
           {
             textRange: {
               type: 'FIXED_RANGE',

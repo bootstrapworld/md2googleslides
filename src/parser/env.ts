@@ -22,7 +22,6 @@ import {
   VideoDefinition,
 } from '../slides.js';
 import {v1 as uuid} from 'uuid';
-import extend from 'extend';
 import pkg from 'lodash';
 const {matches, find} = pkg;
 import {Stylesheet} from './css.js';
@@ -102,7 +101,7 @@ export class Context {
 
   public startStyle(newStyle: StyleDefinition): void {
     const previousStyle = this.currentStyle();
-    const style = extend({}, newStyle, previousStyle);
+    const style = Object.assign({}, newStyle, previousStyle);
     //console.log('@', JSON.stringify(style), this.text);
     style.start = this.text?.rawText.length ?? 0;
     this.styles.push(style);

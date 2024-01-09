@@ -14,7 +14,8 @@
 
 import Debug from 'debug';
 import fs from 'fs';
-import request from 'request-promise-native';
+import * as path from 'path';
+import { blob } from 'node:stream/consumers';
 
 const debug = Debug('md2gslides');
 
@@ -29,28 +30,35 @@ const debug = Debug('md2gslides');
 async function uploadLocalImage(filePath: string, key?: string): Promise<string> {
   debug('Registering file %s', filePath);
   const stream = fs.createReadStream(filePath);
-  try {
-    const params = {
-      file: stream,
-    };
 
-    // all requests should expire in an hour, and be auto-deleted
-    const req : {url: string, formData: any, headers?: any} = {
-      url: 'https://file.io?expires=1h&autoDelete=true', formData: params
-    };
+  try {
+    const data = new FormData();
+    data.append('file', await blob(stream), path.basename(filePath));
+    data.append('expires', '1h');
+    data.append('autoDelete', 'true');
+
+    const request : RequestInfo = new Request('https://file.io', {
+      method: 'POST',
+      body: data,
+    });
 
     // add the authorization key, if one is defined
     if(key) {
-      req.headers = {"Authorization" : key}
+      request.headers.append("Authorization", key);
     }
-    const res = await request.post(req);
-    const responseData = JSON.parse(res);
-    if (!responseData.success) {
-      debug('Unable to upload file: %O', responseData);
-      throw res;
-    }
-    debug('Temporary link: %s', responseData.link);
-    return responseData.link;
+
+    // Make a POST request using fetch
+    return fetch('https://file.io', request)
+      .then(response => response.json())
+      .then(responseJSON => {
+        debug('Temporary link: %s', responseJSON.link);
+        return responseJSON.link;
+      })
+      .catch(error => {
+        debug('Unable to upload file: %O', error);
+        console.error('Error uploading file:', error);
+        throw error;
+      });
   } finally {
     stream.destroy();
   }

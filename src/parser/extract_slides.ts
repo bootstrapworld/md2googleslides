@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import Debug from 'debug';
-import extend from 'extend';
 import Token from 'markdown-it/lib/token';
 import parse5, {Element} from 'parse5';
 import fileUrl from 'file-url';
@@ -337,7 +336,7 @@ inlineTokenRules['list_item_close'] = (token, context) => context.endStyle();
 // Extends inline rules with support for additional
 // tokens that only make sense in the context of a slide
 // or presentation
-extend(fullTokenRules, inlineTokenRules);
+Object.assign(fullTokenRules, inlineTokenRules);
 
 fullTokenRules['heading_open'] = (token, context) => {
   const style = applyTokenStyle(token, {});
