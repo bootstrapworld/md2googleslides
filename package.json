@@ -51,7 +51,6 @@
     "googleapis": "^130.0.0",
     "highlight.js": "^11.9.0",
     "inline-styles-parse": "^1.2.0",
-    "jsonfile": "^6.0.1",
     "layout": "^2.2.0",
     "lodash": "^4.17.21",
     "lowdb": "^1.0",
