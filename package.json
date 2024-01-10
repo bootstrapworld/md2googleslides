@@ -40,6 +40,7 @@
     "slides"
   ],
   "author": "Steven Bazyl",
+  "contributors": "Emmanuel Schanzer",
   "license": "Apache-2.0",
   "dependencies": {
     "argparse": "^2.0.1",
@@ -47,6 +48,7 @@
     "cli-progress": "^3.12.0",
     "debug": "^4.3.4",
     "file-url": "^4.0.0",
+    "formdata-polyfill": "^4.0.10",
     "googleapis": "^130.0.0",
     "highlight.js": "^11.9.0",
     "inline-styles-parse": "^1.2.0",
