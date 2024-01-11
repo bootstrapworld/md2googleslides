@@ -252,34 +252,26 @@ export default class GenericLayout {
     const request = {
       insertText: Object.assign(
         {
-          text: text.rawText.trimLeft(), // trim any starting whitespace
+          text: text.rawText
         },
         locationProps
       ),
     };
     requests.push(request);
 
-    // how much WS did we trim? We'll need to adjust textRuns
-    const startingWhitespace = text.rawText.search(/\S/);
 
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     for (const textRun of text.textRuns) {
-      const runStart = Math.max(textRun.start! - startingWhitespace, 0);
-      const runEnd   = Math.max(textRun.end! - startingWhitespace);
 
-      if(runStart > runEnd || runStart < 0) {
-        console.error(JSON.stringify(textRun, null, 4), 'startingWhitespace', startingWhitespace);
-        throw "invalid textRun";
-      }
       const request: SlidesV1.Schema$Request = {
         updateTextStyle: Object.assign(
           {
             textRange: {
               type: 'FIXED_RANGE',
-              startIndex: runStart,
-              endIndex: runEnd
+              startIndex: textRun.start,
+              endIndex: textRun.end,
             },
             style: {
               bold: textRun.bold,
@@ -323,8 +315,8 @@ export default class GenericLayout {
           {
             textRange: {
               type: 'FIXED_RANGE',
-              startIndex: listMarker.start! - startingWhitespace,
-              endIndex: listMarker.end! - startingWhitespace,
+              startIndex: listMarker.start,
+              endIndex: listMarker.end,
             },
             bulletPreset:
               listMarker.type === 'ordered'
