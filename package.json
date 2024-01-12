@@ -2,8 +2,9 @@
   "name": "md2googleslides",
   "version": "0.5.1",
   "description": "Convert Markdown to Google Slides",
-  "engines": {
-    "node": " >=14.13.1 || >=16.0.0"
+  "engines" : { 
+    "npm" : ">=8.19.0",
+    "node" : ">=16.0.0 <20.0.0"
   },
   "type": "module",
   "exports": "index.js",
