@@ -209,6 +209,9 @@ function loadCss(theme) {
 }
 
 function generateSlides(slideGenerator) {
+  // try to limit warning spew
+  require('events').EventEmitter.defaultMaxListeners = 15;
+
   let source;
   if (args.file) {
     source = path.resolve(args.file);
