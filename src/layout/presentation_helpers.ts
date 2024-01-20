@@ -341,7 +341,7 @@ export function calculateFontSize(
 
   // continually loop over until the size of the text element is within bounds,
   // decreasing by 0.25pt increments until it fits within the width
-  while (isOutsideBounds()) { fontSize = fontSize - 0.25; }
+  while (isOutsideBounds() && fontSize > 12) { fontSize = fontSize - 0.25; }
   
   cachedFontCalculations.set(key, fontSize);
   return fontSize;
