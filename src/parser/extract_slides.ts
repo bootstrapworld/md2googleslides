@@ -267,6 +267,13 @@ inlineTokenRules['code_inline'] = (token, context) => {
   context.endStyle();
 };
 
+inlineTokenRules['code_block'] = (token, context) => {
+  const style = applyTokenStyle(token, {fontFamily: 'Courier New'});
+  context.startStyle(style);
+  context.appendText(token.content);
+  context.endStyle();
+};
+
 inlineTokenRules['hardbreak'] = (token, context) =>
   context.appendText('\u000b');
 
