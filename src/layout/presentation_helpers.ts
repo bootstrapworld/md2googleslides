@@ -234,6 +234,8 @@ const DEFAULT_STYLE = {
   spacingMode: 'NEVER_COLLAPSE'
 }
 
+const MIN_SIZE = 14; // Anything smaller than 14pt is not readable on a projector
+
 const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all sizes
 
 // in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
@@ -341,7 +343,7 @@ export function calculateFontSize(
 
   // continually loop over until the size of the text element is within bounds,
   // decreasing by 0.25pt increments until it fits within the width
-  while (isOutsideBounds() && fontSize > 12) { fontSize = fontSize - 0.25; }
+  while (isOutsideBounds() && fontSize > MIN_SIZE) { fontSize = fontSize - 0.25; }
   
   cachedFontCalculations.set(key, fontSize);
   return fontSize;
