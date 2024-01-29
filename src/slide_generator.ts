@@ -178,6 +178,7 @@ export default class SlideGenerator {
     await this.generateImages();
     await this.probeImageSizes();
     await this.uploadLocalImages();
+    await sleep(1000);
     await this.updatePresentation(this.createSlides());
     await this.reloadPresentation();
     await this.updatePresentation(this.populateSlides());
