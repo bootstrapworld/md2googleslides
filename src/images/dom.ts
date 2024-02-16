@@ -29,6 +29,9 @@ async function renderDOM(image: ImageDefinition) {
   const page = await browser.newPage();
   await page.setContent(html);
 
+  // set deviceScaleFactor for higher-res images
+  await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 5 });
+
   // grab the content and make an image from it
   const content = await page.$("#DOMtoImage");
   if(!content) { throw "Error: no node found with id `DOMtoImage`"; }

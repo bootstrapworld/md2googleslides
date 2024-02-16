@@ -375,7 +375,20 @@ export default class GenericLayout {
           height: image.height + image.padding * 2,
           meta: image,
         });
-        let box = that.getBodyBoundingBox(placeholder);
+
+        let box;
+        // if there's a placeholder, use it as a bounding box
+        // otherwise make the box the same size as the image (in EMU)
+        if(placeholder) {
+          box = that.getBodyBoundingBox(placeholder);
+        } else {
+          box = {
+            width:  image.width  * EMUperPixel, 
+            height: image.height * EMUperPixel, 
+            x: 0, y: 0
+          };
+        }
+
         const computedLayout = layer.export();
 
         // assume we're just converting Pixels->EMU, but scale to fit
@@ -386,6 +399,8 @@ export default class GenericLayout {
           box.width  / computedLayout.width,
           box.height / computedLayout.height
         );
+
+
         const scaledWidth  = computedLayout.width  * scaleRatio;
         const scaledHeight = computedLayout.height * scaleRatio;
 
@@ -396,6 +411,7 @@ export default class GenericLayout {
           console.error('IMPOSSIBLE - multiple images in transformAndReplacePlaceholder');
         }
         const item = computedLayout.items[0];
+
         const itemOffsetX = item.meta.offsetX ? item.meta.offsetX : 0;
         const itemOffsetY = item.meta.offsetY ? item.meta.offsetY : 0;
         const itemPadding = item.meta.padding ? item.meta.padding : 0;
