@@ -376,16 +376,20 @@ export default class GenericLayout {
           meta: image,
         });
 
-        let box;
+        // bounding box of the entire slide
+        const {width: slideWidth, height: slideHeight} = (that.presentation.pageSize)!;
+
         // if there's a placeholder, use it as a bounding box
         // otherwise make the box the same size as the image (in EMU)
+        let box;
         if(placeholder) {
           box = that.getBodyBoundingBox(placeholder);
         } else {
           box = {
             width:  image.width  * EMUperPixel, 
-            height: image.height * EMUperPixel, 
-            x: 0, y: 0
+            height: image.height * EMUperPixel,
+            x: slideWidth!.magnitude!  / 2 - (image.width  * EMUperPixel) / 2, 
+            y: slideHeight!.magnitude! / 2 - (image.height * EMUperPixel) / 2, 
           };
         }
 
@@ -399,7 +403,6 @@ export default class GenericLayout {
           box.width  / computedLayout.width,
           box.height / computedLayout.height
         );
-
 
         const scaledWidth  = computedLayout.width  * scaleRatio;
         const scaledHeight = computedLayout.height * scaleRatio;
