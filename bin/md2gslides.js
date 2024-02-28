@@ -197,14 +197,26 @@ function eraseIfNeeded(slideGenerator) {
 }
 
 function loadCss(theme) {
-  const cssPath = path.join(
-    require.resolve('highlight.js'),
-    '..',
-    '..',
-    'styles',
-    theme + '.css'
-  );
-  const css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
+  let cssPath, css;
+  try {
+    cssPath = path.join(
+      require.resolve('highlight.js'),
+      '..',
+      '..',
+      'styles',
+      theme + '.css'
+    );
+    css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});  
+  } catch(e) {
+    try {
+      cssPath = path.join('..', theme);
+      css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
+    } catch(e) {
+      console.log(e)
+      throw "Could not load the theme '" + theme + "'. It is not known to highlight.js, or a valid file path" 
+    }
+  }
+  
   return css;
 }
 

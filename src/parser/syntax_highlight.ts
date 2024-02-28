@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // Copyright 2019 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {lowlight as low} from 'lowlight/lib/all.js'
+import {createLowlight, common} from 'lowlight'
+import scheme from 'highlight.js/lib/languages/scheme'
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
 import {StyleDefinition} from '../slides.js';
@@ -90,7 +93,9 @@ function highlightSyntax(
   language: string,
   context: Context
 ): void {
-  const highlightResult = low.highlight(language, content);
+  const lowlight = createLowlight(common);
+  lowlight.register("scheme", scheme);
+  const highlightResult = lowlight.highlight(language, content);
   for (const node of highlightResult.children) {
     processHastNode(node, context);
   }

@@ -2,9 +2,9 @@
   "name": "md2googleslides",
   "version": "0.5.1",
   "description": "Convert Markdown to Google Slides",
-  "engines" : { 
-    "npm" : ">=8.19.0",
-    "node" : ">=16.0.0 <20.0.0"
+  "engines": {
+    "npm": ">=8.19.0",
+    "node": ">=16.0.0 <20.0.0"
   },
   "type": "module",
   "exports": "index.js",
@@ -56,7 +56,7 @@
     "layout": "^2.2.0",
     "lodash": "^4.17.21",
     "lowdb": "^1.0",
-    "lowlight": "^2.9.0",
+    "lowlight": "^3.1.0",
     "markdown-it": "^13.0.1",
     "markdown-it-attrs": "^4.1.4",
     "markdown-it-container": "^3.0.0",
@@ -92,7 +92,6 @@
     "@types/debug": "^4.1.7",
     "@types/jsonfile": "^6.1.0",
     "@types/lowdb": "1.0.11",
-    "@types/lowlight": "^0.0.3",
     "@types/markdown-it": "12.2.3",
     "@types/mocha": "^10.0.1",
     "@types/mock-fs": "^4.13.1",
