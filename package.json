@@ -52,6 +52,7 @@
     "formdata-polyfill": "^4.0.10",
     "googleapis": "^130.0.0",
     "highlight.js": "^11.9.0",
+    "highlightjs-bootstrap": "https://github.com/bootstrapworld/highlightjs-bootstrap",
     "inline-styles-parse": "^1.2.0",
     "layout": "^2.2.0",
     "lodash": "^4.17.21",

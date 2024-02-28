@@ -16,6 +16,7 @@
 
 import {createLowlight, common} from 'lowlight'
 import scheme from 'highlight.js/lib/languages/scheme'
+import pyret from 'highlightjs-bootstrap/src/pyret.js'
 import python from 'highlight.js/lib/languages/python'
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
@@ -96,10 +97,11 @@ function highlightSyntax(
 ): void {
   const lowlight = createLowlight();
   lowlight.register({scheme});
-  lowlight.register({python});
+  lowlight.register({pyret});
   const highlightResult = language? lowlight.highlight(language, content)
     : lowlight.highlightAuto(content);
   for (const node of highlightResult.children) {
+
     processHastNode(node, context);
   }
 }

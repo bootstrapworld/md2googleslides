@@ -263,6 +263,7 @@ export default class GenericLayout {
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
+    text.textRuns.reverse();
     for (const textRun of text.textRuns) {
 
       const request: SlidesV1.Schema$Request = {
@@ -299,6 +300,7 @@ export default class GenericLayout {
       request.updateTextStyle.fields = this.computeShallowFieldMask(
         request.updateTextStyle.style
       );
+
       if (request.updateTextStyle.fields.length) {
         requests.push(request); // Only push if at least one style set
       }
