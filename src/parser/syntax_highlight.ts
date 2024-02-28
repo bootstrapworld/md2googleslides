@@ -16,6 +16,7 @@
 
 import {createLowlight, common} from 'lowlight'
 import scheme from 'highlight.js/lib/languages/scheme'
+import python from 'highlight.js/lib/languages/python'
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
 import {StyleDefinition} from '../slides.js';
@@ -90,12 +91,14 @@ hastRules['span'] = (node, context) => {
 
 function highlightSyntax(
   content: string,
-  language: string,
+  language: string | undefined,
   context: Context
 ): void {
-  const lowlight = createLowlight(common);
-  lowlight.register("scheme", scheme);
-  const highlightResult = lowlight.highlight(language, content);
+  const lowlight = createLowlight();
+  lowlight.register({scheme});
+  lowlight.register({python});
+  const highlightResult = language? lowlight.highlight(language, content)
+    : lowlight.highlightAuto(content);
   for (const node of highlightResult.children) {
     processHastNode(node, context);
   }

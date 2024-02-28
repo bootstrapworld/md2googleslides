@@ -62,7 +62,6 @@ function isVideo(token: any): token is VideoToken {
 
 function processMarkdownToken(token: Token, context: Context): void {
   debug('Token: %O', token);
-  //console.log('saw ', token.type);
   const rule = ruleSet[token.type];
   if (rule) {
     rule(token, context);
@@ -216,6 +215,13 @@ inlineTokenRules['fence'] = (token, context) => {
   const style = applyTokenStyle(token, {fontFamily: 'Courier New'});
   context.startStyle(style);
   const language = token.info ? token.info.trim() : undefined;
+  highlightSyntax(token.content, language, context);
+
+  /*
+  NOTE(Emmanuel): this was the original code, now replaced
+  with the line above after updating highlightSyntax() to
+  use highlightAuto with ONLY python and scheme as options
+
   if (language) {
     highlightSyntax(token.content, language, context);
   } else {
@@ -224,6 +230,8 @@ inlineTokenRules['fence'] = (token, context) => {
     // space that appears between paragraphs
     context.appendText(token.content.replace(/\n/g, '\u000b'));
   }
+  */
+
   context.appendText('\n');
   context.endStyle();
 };
@@ -263,7 +271,19 @@ inlineTokenRules['link_close'] = (token, context) => context.endStyle();
 inlineTokenRules['code_inline'] = (token, context) => {
   const style = applyTokenStyle(token, {fontFamily: 'Courier New'});
   context.startStyle(style);
-  context.appendText(token.content);
+  const language = token.info ? token.info.trim() : undefined;
+  highlightSyntax(token.content, language, context);
+  /*
+
+  NOTE(Emmanuel): this was the original code, now replaced with 
+  the two lines above
+
+  // For code blocks, replace line feeds with vertical tabs to keep
+  // the block as a single paragraph. This avoid the extra vertical
+  // space that appears between paragraphs
+  context.appendText(token.content.replace(/\n/g, '\u000b'));
+
+  */
   context.endStyle();
 };
 
