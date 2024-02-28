@@ -209,7 +209,7 @@ function loadCss(theme) {
     css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});  
   } catch(e) {
     try {
-      cssPath = path.join('..', theme);
+      cssPath = path.join(theme);
       css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
     } catch(e) {
       console.log(e)
