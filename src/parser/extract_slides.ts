@@ -273,8 +273,8 @@ inlineTokenRules['code_inline'] = (token, context) => {
   context.startStyle(style);
   const language = token.info ? token.info.trim() : undefined;
   highlightSyntax(token.content, language, context);
+  
   /*
-
   NOTE(Emmanuel): this was the original code, now replaced with 
   the two lines above
 
@@ -282,8 +282,8 @@ inlineTokenRules['code_inline'] = (token, context) => {
   // the block as a single paragraph. This avoid the extra vertical
   // space that appears between paragraphs
   context.appendText(token.content.replace(/\n/g, '\u000b'));
-
   */
+ 
   context.endStyle();
 };
 

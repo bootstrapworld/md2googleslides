@@ -98,10 +98,19 @@ function highlightSyntax(
   const lowlight = createLowlight();
   lowlight.register({scheme});
   lowlight.register({pyret});
-  const highlightResult = language? lowlight.highlight(language, content)
-    : lowlight.highlightAuto(content);
-  for (const node of highlightResult.children) {
 
+  // if a language is provided, use that. Otherwise guess
+  let highlightResult;
+  if(language) { 
+    highlightResult = lowlight.highlight(language, content); 
+  } else {
+    highlightResult = lowlight.highlightAuto(content);
+  }
+  // if guessing didn't work, default to Pyret
+  if (!highlightResult.language) {
+    highlightResult = lowlight.highlight("pyret", content);
+  }
+  for (const node of highlightResult.children) {
     processHastNode(node, context);
   }
 }
