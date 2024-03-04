@@ -155,7 +155,12 @@ export default class SlideGenerator {
     presentationId: string
   ): Promise<SlideGenerator> {
     const api = google.slides({version: 'v1', auth: oauth2Client});
-    const res = await api.presentations.get({presentationId: presentationId});
+    const res = await api.presentations
+      .get({presentationId: presentationId})
+      .catch(e => { 
+        e.errors[0].message = "could not find presentation with ID="+presentationId;
+        throw e;
+      });
     const presentation = res.data;
     return new SlideGenerator(api, presentation);
   }

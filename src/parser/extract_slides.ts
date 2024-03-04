@@ -135,6 +135,7 @@ inlineTokenRules['html_inline'] = (token, context) => {
         break;
       case 'code':
         style.fontFamily = 'Roboto Mono';
+        style.fontSize = { magnitude:14, unit:'PT' };
         break;
       case 'sub':
         style.baselineOffset = 'SUBSCRIPT';

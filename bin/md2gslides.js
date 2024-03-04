@@ -110,7 +110,7 @@ parser.add_argument('--use-fileio', {
 const args = parser.parse_args();
 
 function handleError(err) {
-  console.log('Unable to generate slides:', err);
+  console.error('❌ Unable to generate slides:', err.errors[0].message);
 }
 
 function prompt(url) {
@@ -176,17 +176,17 @@ function buildSlideGenerator(oauth2Client) {
   const presentationId = args.id;
   const copyId = args.copy;
   const parentId = args.parentId;
-
   if (presentationId) {
     return SlideGenerator.forPresentation(oauth2Client, presentationId);
   } else if (copyId) {
     return SlideGenerator.copyPresentation(oauth2Client, title, copyId, parentId);
   } else {
     return SlideGenerator.newPresentation(oauth2Client, title, parentId);
-  }
+  }    
 }
 
 function eraseIfNeeded(slideGenerator) {
+  console.log('erasing old slides');
   if (args.erase || !args.id) {
     return slideGenerator.erase().then(() => {
       return slideGenerator;
@@ -221,6 +221,7 @@ function loadCss(theme) {
 }
 
 function generateSlides(slideGenerator) {
+  console.log('generating slides');
   // try to limit warning spew
   require('events').EventEmitter.defaultMaxListeners = 15;
 
