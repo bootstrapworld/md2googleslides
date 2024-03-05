@@ -110,7 +110,12 @@ parser.add_argument('--use-fileio', {
 const args = parser.parse_args();
 
 function handleError(err) {
-  console.error('❌ Unable to generate slides:', err.errors[0].message);
+  if(err && err.errors && err.errors[0] && && err.errors[0].message) {
+    console.error('❌ Unable to generate slides:', err.errors[0].message);  
+  } else {
+    throw err;
+  }
+  
 }
 
 function prompt(url) {
