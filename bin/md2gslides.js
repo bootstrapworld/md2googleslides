@@ -191,7 +191,6 @@ function buildSlideGenerator(oauth2Client) {
 }
 
 function eraseIfNeeded(slideGenerator) {
-  console.log('erasing old slides');
   if (args.erase || !args.id) {
     return slideGenerator.erase().then(() => {
       return slideGenerator;
@@ -226,7 +225,6 @@ function loadCss(theme) {
 }
 
 function generateSlides(slideGenerator) {
-  console.log('generating slides');
   // try to limit warning spew
   require('events').EventEmitter.defaultMaxListeners = 15;
 
