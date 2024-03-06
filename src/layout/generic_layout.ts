@@ -371,6 +371,7 @@ export default class GenericLayout {
       ): void {
         // TODO - Fix weird cast
         const layer = (Layout as (s: string) => Layout.PackingSmith)('left-right'); // TODO - Configurable?
+
         debug('Slide #%d: adding inline image %s', that.slide.index, image.url);
         layer.addItem({
           width: image.width + image.padding * 2,
@@ -382,14 +383,17 @@ export default class GenericLayout {
         const {width: slideWidth, height: slideHeight} = (that.presentation.pageSize)!;
 
         // if there's a placeholder, use it as a bounding box
-        // otherwise make the box the same size as the image (in EMU)
+        // otherwise: if the image is smaller than 50% of the slide
+        // use actual size. Otherwise 
         let box;
         if(placeholder) {
           box = that.getBodyBoundingBox(placeholder);
         } else {
+          const maxWidth  = slideWidth!.magnitude!  * 0.5;
+          const maxHeight = slideHeight!.magnitude! * 0.5;
           box = {
-            width:  image.width  * EMUperPixel, 
-            height: image.height * EMUperPixel,
+            width:  Math.min(image.width  * EMUperPixel, maxWidth),
+            height: Math.min(image.height * EMUperPixel, maxHeight),
             x: slideWidth!.magnitude!  / 2 - (image.width  * EMUperPixel) / 2, 
             y: slideHeight!.magnitude! / 2 - (image.height * EMUperPixel) / 2, 
           };
