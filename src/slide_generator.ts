@@ -183,16 +183,6 @@ export default class SlideGenerator {
     await this.generateImages();
     await this.probeImageSizes();
     await this.uploadLocalImages();
-    /*
-    console.log('Waiting 30sec for image permissions to set');
-    const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-    bar.start(30, 0);
-    for(var i=0; i<=30; i++) {
-      bar.update(i);
-      await sleep(1000);
-    }
-    bar.stop();
-    */
     await this.updatePresentation(this.createSlides());
     await this.reloadPresentation();
     await this.updatePresentation(this.populateSlides());
@@ -241,7 +231,7 @@ export default class SlideGenerator {
 
     // process each image, throttling if it's an upload
     if(upload && (images.length > 0)) {
-      console.log("Uploading images for this slide deck");
+      console.log("Uploading images for this slide deck to file.io");
       const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
       bar.start(images.length-1, 0);
       for(const [i, image] of images.entries()) {
@@ -357,23 +347,55 @@ export default class SlideGenerator {
       return Promise.resolve();
     }
 
-    const altTextReqs = batch.requests.filter(o => o["updatePageElementAltText"]);
+    // createImageReqs need to be throttled to <8/sec, and
+    // altTextReqs only work *after* the images are created,
+    // so we need to treat them differently
     const createImageReqs = batch.requests.filter(o => o["createImage"]);
-    const everythingElse = batch.requests.filter(
+    const altTextReqs = batch.requests.filter(o => o["updatePageElementAltText"]);
+
+    // start with just the non-image requests
+    const nonImageReqs = batch.requests.filter(
       o => !(o["createImage"] || o["updatePageElementAltText"]));
-
-    // re-order reqs so that image-related requests are at the end
-    batch.requests = everythingElse.concat(createImageReqs, altTextReqs);
+    batch.requests = nonImageReqs
     
-    //console.log('after reshuffling', JSON.stringify(
-    //  batch.requests.map(o => Object.keys(o)[0]), null, 2));
-
-    const res = await this.api.presentations.batchUpdate({
+    const nonImageRes = await this.api.presentations.batchUpdate({
       presentationId: this.presentation.presentationId,
       requestBody: batch,
     });
-    
-    debug('API response: %O', res.data);
+
+    /* 
+      IMAGE THROTTLING
+      - if the slide deck includes images, we risk hitting file.io's 8 req/sec limit
+      - to deal with this, we break all the createImage requests into chunks of <8
+      - altTextRequests do not require throttling, but must come after createImage
+        -> we just stick them all at the end of the last chunk
+      - then we throttle each chunk by at least 1sec
+    */
+    const MAX_IMAGES_PER_CHUNK = 6;
+    const DELAY_BTW_REQUESTS = 2000; 
+    if(createImageReqs.length > 0) {
+      let requestChunks:SlidesV1.Schema$Request[][] = [];
+      for (let i = 0; i < createImageReqs.length; i += MAX_IMAGES_PER_CHUNK) {
+        requestChunks.push(createImageReqs.slice(i, i + MAX_IMAGES_PER_CHUNK));
+      }
+      requestChunks[requestChunks.length-1].concat(altTextReqs); // add altText to end
+      console.log(`Sending createImage requests to Google (throttling at ${MAX_IMAGES_PER_CHUNK} images every ${DELAY_BTW_REQUESTS/1000}s)`);
+
+      const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      bar.start(requestChunks.length, 0);
+      for (const [i, chunk] of requestChunks.entries()) {
+        bar.update(i);
+        batch.requests = chunk;
+        let imageRes = await this.api.presentations.batchUpdate({
+          presentationId: this.presentation.presentationId,
+          requestBody: batch,
+        });
+        await sleep(DELAY_BTW_REQUESTS);
+      }
+      bar.stop();
+    }
+
+    debug('API response: %O', nonImageRes.data);
   }
 
   /**
