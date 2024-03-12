@@ -54,6 +54,7 @@
     "highlight.js": "^11.9.0",
     "highlightjs-bootstrap": "https://github.com/bootstrapworld/highlightjs-bootstrap",
     "inline-styles-parse": "^1.2.0",
+    "just-camel-case": "^6.2.0",
     "layout": "^2.2.0",
     "lodash": "^4.17.21",
     "lowdb": "^1.0",
