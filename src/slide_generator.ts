@@ -183,7 +183,16 @@ export default class SlideGenerator {
     await this.generateImages();
     await this.probeImageSizes();
     await this.uploadLocalImages();
-    await sleep(1000);
+    /*
+    console.log('Waiting 30sec for image permissions to set');
+    const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    bar.start(30, 0);
+    for(var i=0; i<=30; i++) {
+      bar.update(i);
+      await sleep(1000);
+    }
+    bar.stop();
+    */
     await this.updatePresentation(this.createSlides());
     await this.reloadPresentation();
     await this.updatePresentation(this.populateSlides());
@@ -347,10 +356,23 @@ export default class SlideGenerator {
     if (!batch.requests || batch.requests.length === 0) {
       return Promise.resolve();
     }
+
+    const altTextReqs = batch.requests.filter(o => o["updatePageElementAltText"]);
+    const createImageReqs = batch.requests.filter(o => o["createImage"]);
+    const everythingElse = batch.requests.filter(
+      o => !(o["createImage"] || o["updatePageElementAltText"]));
+
+    // re-order reqs so that image-related requests are at the end
+    batch.requests = everythingElse.concat(createImageReqs, altTextReqs);
+    
+    //console.log('after reshuffling', JSON.stringify(
+    //  batch.requests.map(o => Object.keys(o)[0]), null, 2));
+
     const res = await this.api.presentations.batchUpdate({
       presentationId: this.presentation.presentationId,
       requestBody: batch,
     });
+    
     debug('API response: %O', res.data);
   }
 

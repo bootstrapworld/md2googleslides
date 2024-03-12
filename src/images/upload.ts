@@ -35,7 +35,7 @@ async function uploadLocalImage(filePath: string, key?: string): Promise<string>
   try {
     const data = new FormData();
     data.append('file', await blob(stream), path.basename(filePath));
-    data.append('expires', '1h');
+    data.append('expires', '5m');
     data.append('autoDelete', 'true');
 
     const request : RequestInfo = new Request('https://file.io', {
