@@ -240,7 +240,7 @@ export default class SlideGenerator {
       bar.start(images.length, 0);
       for(const [i, image] of images.entries()) {
         bar.increment();
-        await sleep(350);
+        await sleep(250);
         promises.push(fn(image));
       }
       bar.stop();
@@ -351,57 +351,53 @@ export default class SlideGenerator {
       return Promise.resolve();
     }
 
-    // createImageReqs need to be throttled to <8/sec, and
-    // altTextReqs only work *after* the images are created,
-    // so we need to treat them differently
-    const createImageReqs = batch.requests.filter(o => o["createImage"]);
-    const altTextReqs = batch.requests.filter(o => o["updatePageElementAltText"]);
-
-    // start with just the non-image requests
-    const nonImageReqs = batch.requests.filter(
-      o => !(o["createImage"] || o["updatePageElementAltText"]));
-    batch.requests = nonImageReqs
-    
-    const nonImageRes = await this.api.presentations.batchUpdate({
-      presentationId: this.presentation.presentationId,
-      requestBody: batch,
-    });
-
     /* 
       IMAGE THROTTLING
-      - if the slide deck includes images, we risk hitting file.io's 8 req/sec limit
-      - to deal with this, we break all the createImage requests into chunks of <8
-      - altTextRequests do not require throttling, but must come after createImage
-        -> we just stick them all at the end of the last chunk
-      - then we throttle each chunk by at least 1sec
+      If the slide deck includes images, we risk hitting file.io's 8 req/sec 
+      limit. To deal with this, we process the requests *in-order*, splitting
+      them into chunks. Each chunk is an array of requests: 
+       - falling in the same order they were before
+       - createImage requests happen <= MAX_IMAGES_PER_CHUNK times in each chunk
     */
-    const MAX_IMAGES_PER_CHUNK = 6;
-    const DELAY_BTW_REQUESTS = 2000; 
-    if(createImageReqs.length > 0) {
-      let requestChunks:SlidesV1.Schema$Request[][] = [];
-      for (let i = 0; i < createImageReqs.length; i += MAX_IMAGES_PER_CHUNK) {
-        requestChunks.push(createImageReqs.slice(i, i + MAX_IMAGES_PER_CHUNK));
-      }
-      requestChunks[requestChunks.length-1].concat(altTextReqs); // add altText to end
-      
-      const bar = new cliProgress.SingleBar({
-        format: 'Sending {value}/{total} createImageRequestBatches to google',
-        hideCursor: true
-      });
-      bar.start(requestChunks.length, 0);
-      for (const [i, chunk] of requestChunks.entries()) {
-        bar.increment();
-        batch.requests = chunk;
-        let imageRes = await this.api.presentations.batchUpdate({
-          presentationId: this.presentation.presentationId,
-          requestBody: batch,
-        });
-        await sleep(DELAY_BTW_REQUESTS);
-      }
-      bar.stop();
-    }
+    const MAX_IMAGES_PER_CHUNK = 6;  
+    let requestChunks:SlidesV1.Schema$Request[][] = [];
+    let currentChunk:SlidesV1.Schema$Request[] = [];
+    let createImageRequestCount = 0;
 
-    debug('API response: %O', nonImageRes.data);
+    batch.requests.forEach( (req) => {
+      if(req["createImage"]) { createImageRequestCount++; }
+      if(createImageRequestCount > MAX_IMAGES_PER_CHUNK) {
+        requestChunks.push(currentChunk);
+        createImageRequestCount = 0;
+        currentChunk = [req];
+      } else {
+        currentChunk.push(req);
+      }
+    });
+    requestChunks.push(currentChunk);
+
+    /* 
+      Throttle the processing of these chunks, so that Google Slides
+      never sends more than one chunk every 2 seconds. This keeps us
+      from blowing file.io's limit in any 1 second window
+    */
+    const DELAY_BTW_REQUESTS = 2000; 
+    const bar = new cliProgress.SingleBar({
+      format: 'Sending {value}/{total} request batches to google',
+      hideCursor: true
+    });
+    bar.start(requestChunks.length, 0);
+    for await (const [i, chunk] of requestChunks.entries()) {
+      bar.increment();
+      batch.requests = chunk;
+      let response = await this.api.presentations.batchUpdate({
+        presentationId: this.presentation.presentationId,
+        requestBody: batch,
+      });
+      debug('API response: %O', response.data);
+      await sleep(DELAY_BTW_REQUESTS);
+    }
+    bar.stop();
   }
 
   /**
