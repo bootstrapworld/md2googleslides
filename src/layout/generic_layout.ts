@@ -391,11 +391,13 @@ export default class GenericLayout {
         } else {
           const maxWidth  = slideWidth!.magnitude!  * 0.5;
           const maxHeight = slideHeight!.magnitude! * 0.5;
+          const imgWidth  = Math.min(image.width  * EMUperPixel, maxWidth);
+          const imgHeight = Math.min(image.height * EMUperPixel, maxHeight);
           box = {
-            width:  Math.min(image.width  * EMUperPixel, maxWidth),
-            height: Math.min(image.height * EMUperPixel, maxHeight),
-            x: slideWidth!.magnitude!  / 2 - (image.width  * EMUperPixel) / 2, 
-            y: slideHeight!.magnitude! / 2 - (image.height * EMUperPixel) / 2, 
+            width:  imgWidth,
+            height: imgHeight,
+            x: maxWidth - imgWidth / 2, 
+            y: maxHeight - imgHeight / 2, 
           };
         }
 
