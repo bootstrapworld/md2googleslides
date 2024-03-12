@@ -232,10 +232,14 @@ export default class SlideGenerator {
     // process each image, throttling if it's an upload
     if(upload && (images.length > 0)) {
       console.log("Uploading images for this slide deck to file.io");
-      const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      bar.start(images.length-1, 0);
+      //const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      const bar = new cliProgress.SingleBar({
+        format: 'Sending {value}/{total} image files to file.io',
+        hideCursor: true
+      });
+      bar.start(images.length, 0);
       for(const [i, image] of images.entries()) {
-        bar.update(i);
+        bar.increment();
         await sleep(150);
         promises.push(fn(image));
       }
@@ -379,12 +383,14 @@ export default class SlideGenerator {
         requestChunks.push(createImageReqs.slice(i, i + MAX_IMAGES_PER_CHUNK));
       }
       requestChunks[requestChunks.length-1].concat(altTextReqs); // add altText to end
-      console.log(`Sending createImage requests to Google (throttling at ${MAX_IMAGES_PER_CHUNK} images every ${DELAY_BTW_REQUESTS/1000}s)`);
-
-      const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      
+      const bar = new cliProgress.SingleBar({
+        format: 'Sending {value}/{total} createImageRequestBatches to google',
+        hideCursor: true
+      });
       bar.start(requestChunks.length, 0);
       for (const [i, chunk] of requestChunks.entries()) {
-        bar.update(i);
+        bar.increment();
         batch.requests = chunk;
         let imageRes = await this.api.presentations.batchUpdate({
           presentationId: this.presentation.presentationId,
