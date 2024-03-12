@@ -240,7 +240,7 @@ export default class SlideGenerator {
       bar.start(images.length, 0);
       for(const [i, image] of images.entries()) {
         bar.increment();
-        await sleep(150);
+        await sleep(250);
         promises.push(fn(image));
       }
       bar.stop();
