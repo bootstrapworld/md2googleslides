@@ -238,9 +238,14 @@ export default class SlideGenerator {
         hideCursor: true
       });
       bar.start(images.length, 0);
+
+      // make sure to avoid going over 8 requests/sec
+      // 1) space out requests every 150ms
+      // 2) if we've uploaded 7 images, wait an extra 500
       for(const [i, image] of images.entries()) {
         bar.increment();
-        await sleep(250);
+        await sleep(150);
+        if(i%6 == 0) { await sleep(250); }
         promises.push(fn(image));
       }
       bar.stop();
@@ -249,7 +254,9 @@ export default class SlideGenerator {
     }
 
     await Promise.all(promises);
-    
+    if(upload) {
+      console.log(JSON.stringify(images.map(i =>i.url) ,null,2))
+    }
   }
   protected async generateImages(): Promise<void> {
     return this.processImages(maybeGenerateImage);
@@ -262,14 +269,14 @@ export default class SlideGenerator {
     ): Promise<void> => {
       assert(image.url);
       const parsedUrl = new URL(image.url);
-      // have we already uploaded it?
-      if(urlCache[parsedUrl.pathname]) { 
-        image.url = urlCache[parsedUrl.pathname];
-        return;
-      }
       // if it's not a file, just terminate
-      else if (parsedUrl.protocol !== 'file:') {
-        return;
+      if (parsedUrl.protocol !== 'file:') {
+        return Promise.reject(`The url ${parsedUrl}was not a valid file`);
+      }
+      // if we've already uploaded it, use the cached link
+      else if(urlCache[parsedUrl.pathname]) { 
+        image.url = urlCache[parsedUrl.pathname];
+        return Promise.resolve();
       }
       // reject the promise if we're not allowed to upload
       else if (!this.allowUpload) {
@@ -278,6 +285,7 @@ export default class SlideGenerator {
       else {
         image.url = await uploadLocalImage(parsedUrl.pathname, this.fileIO_key);
         urlCache[parsedUrl.pathname] = image.url;
+        return Promise.resolve();
       }
     };
     return this.processImages(uploadImageifLocal, true);
