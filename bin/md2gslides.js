@@ -106,6 +106,11 @@ parser.add_argument('--use-fileio', {
   dest: 'useFileio',
   required: false,
 });
+parser.add_argument('-gs', '--gstyle', {
+  dest: 'gs',
+  help: 'Name of file containing JSON-formatted style object',
+  required: false,
+});
 
 const args = parser.parse_args();
 
@@ -190,11 +195,11 @@ function buildSlideGenerator(oauth2Client) {
   const copyId = args.copy;
   const parentId = args.parentId;
   if (presentationId) {
-    return SlideGenerator.forPresentation(oauth2Client, presentationId);
+    return SlideGenerator.forPresentation(oauth2Client, presentationId, args.gs);
   } else if (copyId) {
-    return SlideGenerator.copyPresentation(oauth2Client, title, copyId, parentId);
+    return SlideGenerator.copyPresentation(oauth2Client, title, copyId, parentId, args.gs);
   } else {
-    return SlideGenerator.newPresentation(oauth2Client, title, parentId);
+    return SlideGenerator.newPresentation(oauth2Client, title, parentId, args.gs);
   }    
 }
 

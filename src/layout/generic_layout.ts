@@ -306,6 +306,32 @@ export default class GenericLayout {
       }
     }
 
+    const paragraphStyleRequest: SlidesV1.Schema$Request = {
+      updateParagraphStyle: {
+        style: {
+          //lineSpacing: 2,
+          //alignment: 'ALIGNMENT_UNSPECIFIED',
+          //indentStart: {magnitude: 0, unit: 'PT'},
+          //indentEnd:   {magnitude: 0, unit: 'PT'},
+          //spaceAbove: {magnitude: 0, unit: 'PT'},
+          spaceBelow: {magnitude: 10, unit: 'PT'},
+          //indentFirstLine: {magnitude: 0, unit: 'PT'},
+          //direction: 'LEFT_TO_RIGHT',
+          spacingMode: 'COLLAPSE_LISTS'
+        },
+        objectId: locationProps.objectId
+      }
+    };
+    assert(paragraphStyleRequest.updateParagraphStyle?.style);
+    paragraphStyleRequest.updateParagraphStyle.fields = this.computeShallowFieldMask(
+      paragraphStyleRequest.updateParagraphStyle.style
+    );
+
+    if (paragraphStyleRequest.updateParagraphStyle.fields) {
+      requests.push(paragraphStyleRequest); // Only push if at least one style set
+    }
+
+
     // Convert paragraphs to lists.
     // Note that leading tabs for nested lists in the raw text are removed.
     // In this case, we're assuming that lists are supplied in order of
