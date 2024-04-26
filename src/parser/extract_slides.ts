@@ -213,7 +213,7 @@ inlineTokenRules['paragraph_close'] = (token, context) => {
 };
 
 inlineTokenRules['fence'] = (token, context) => {
-  const style = applyTokenStyle(token, {fontFamily: 'Roboto Mono'});
+  const style = applyTokenStyle(token, {fontFamily: 'Courier Prime'});
   context.startStyle(style);
   const language = token.info ? token.info.trim() : undefined;
   highlightSyntax(token.content, language, context);
@@ -270,7 +270,7 @@ inlineTokenRules['link_open'] = (token, context) => {
 inlineTokenRules['link_close'] = (token, context) => context.endStyle();
 
 inlineTokenRules['code_inline'] = (token, context) => {
-  const style = applyTokenStyle(token, {fontFamily: 'Roboto Mono'});
+  const style = applyTokenStyle(token, {fontFamily: 'Courier Prime'});
   context.startStyle(style);
   const language = token.info ? token.info.trim() : undefined;
   highlightSyntax(token.content, language, context);
@@ -289,7 +289,7 @@ inlineTokenRules['code_inline'] = (token, context) => {
 };
 
 inlineTokenRules['code_block'] = (token, context) => {
-  const style = applyTokenStyle(token, {fontFamily: 'Roboto Mono'});
+  const style = applyTokenStyle(token, {fontFamily: 'Courier Prime'});
   context.startStyle(style);
   context.appendText(token.content);
   context.endStyle();
