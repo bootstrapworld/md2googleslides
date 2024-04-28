@@ -48,3 +48,6 @@ lib
 
 # OSX files
 .DS_Store
+
+# package-lock
+package-lock.json

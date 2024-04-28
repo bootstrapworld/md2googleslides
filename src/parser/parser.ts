@@ -19,7 +19,7 @@ import attrs from 'markdown-it-attrs';
 // @ts-ignore
 import lazyHeaders from 'markdown-it-lazy-headers';
 // @ts-ignore
-import emoji from 'markdown-it-emoji';
+import { full as emoji } from 'markdown-it-emoji';
 // @ts-ignore
 import expandTabs from 'markdown-it-expand-tabs';
 // @ts-ignore

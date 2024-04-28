@@ -183,16 +183,6 @@ export default class SlideGenerator {
     await this.generateImages();
     await this.probeImageSizes();
     await this.uploadLocalImages();
-    /*
-    console.log('Waiting 30sec for image permissions to set');
-    const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-    bar.start(30, 0);
-    for(var i=0; i<=30; i++) {
-      bar.update(i);
-      await sleep(1000);
-    }
-    bar.stop();
-    */
     await this.updatePresentation(this.createSlides());
     await this.reloadPresentation();
     await this.updatePresentation(this.populateSlides());
@@ -241,12 +231,21 @@ export default class SlideGenerator {
 
     // process each image, throttling if it's an upload
     if(upload && (images.length > 0)) {
-      console.log("Uploading images for this slide deck");
-      const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      bar.start(images.length-1, 0);
+      console.log("Uploading images for this slide deck to file.io");
+      //const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      const bar = new cliProgress.SingleBar({
+        format: 'Sending {value}/{total} image files to file.io',
+        hideCursor: true
+      });
+      bar.start(images.length, 0);
+
+      // make sure to avoid going over 8 requests/sec
+      // 1) space out requests every 150ms
+      // 2) if we've uploaded 7 images, wait an extra 500
       for(const [i, image] of images.entries()) {
-        bar.update(i);
+        bar.increment();
         await sleep(150);
+        if(i%6 == 0) { await sleep(250); }
         promises.push(fn(image));
       }
       bar.stop();
@@ -255,7 +254,9 @@ export default class SlideGenerator {
     }
 
     await Promise.all(promises);
-    
+    if(upload) {
+      console.log(JSON.stringify(images.map(i =>i.url) ,null,2))
+    }
   }
   protected async generateImages(): Promise<void> {
     return this.processImages(maybeGenerateImage);
@@ -268,14 +269,14 @@ export default class SlideGenerator {
     ): Promise<void> => {
       assert(image.url);
       const parsedUrl = new URL(image.url);
-      // have we already uploaded it?
-      if(urlCache[parsedUrl.pathname]) { 
-        image.url = urlCache[parsedUrl.pathname];
-        return;
-      }
       // if it's not a file, just terminate
-      else if (parsedUrl.protocol !== 'file:') {
-        return;
+      if (parsedUrl.protocol !== 'file:') {
+        return Promise.reject(`The url ${parsedUrl}was not a valid file`);
+      }
+      // if we've already uploaded it, use the cached link
+      else if(urlCache[parsedUrl.pathname]) { 
+        image.url = urlCache[parsedUrl.pathname];
+        return Promise.resolve();
       }
       // reject the promise if we're not allowed to upload
       else if (!this.allowUpload) {
@@ -284,6 +285,7 @@ export default class SlideGenerator {
       else {
         image.url = await uploadLocalImage(parsedUrl.pathname, this.fileIO_key);
         urlCache[parsedUrl.pathname] = image.url;
+        return Promise.resolve();
       }
     };
     return this.processImages(uploadImageifLocal, true);
@@ -357,23 +359,53 @@ export default class SlideGenerator {
       return Promise.resolve();
     }
 
-    const altTextReqs = batch.requests.filter(o => o["updatePageElementAltText"]);
-    const createImageReqs = batch.requests.filter(o => o["createImage"]);
-    const everythingElse = batch.requests.filter(
-      o => !(o["createImage"] || o["updatePageElementAltText"]));
+    /* 
+      IMAGE THROTTLING
+      If the slide deck includes images, we risk hitting file.io's 8 req/sec 
+      limit. To deal with this, we process the requests *in-order*, splitting
+      them into chunks. Each chunk is an array of requests: 
+       - falling in the same order they were before
+       - createImage requests happen <= MAX_IMAGES_PER_CHUNK times in each chunk
+    */
+    const MAX_IMAGES_PER_CHUNK = 6;  
+    let requestChunks:SlidesV1.Schema$Request[][] = [];
+    let currentChunk:SlidesV1.Schema$Request[] = [];
+    let createImageRequestCount = 0;
 
-    // re-order reqs so that image-related requests are at the end
-    batch.requests = everythingElse.concat(createImageReqs, altTextReqs);
-    
-    //console.log('after reshuffling', JSON.stringify(
-    //  batch.requests.map(o => Object.keys(o)[0]), null, 2));
-
-    const res = await this.api.presentations.batchUpdate({
-      presentationId: this.presentation.presentationId,
-      requestBody: batch,
+    batch.requests.forEach( (req) => {
+      if(req["createImage"]) { createImageRequestCount++; }
+      if(createImageRequestCount > MAX_IMAGES_PER_CHUNK) {
+        requestChunks.push(currentChunk);
+        createImageRequestCount = 0;
+        currentChunk = [req];
+      } else {
+        currentChunk.push(req);
+      }
     });
-    
-    debug('API response: %O', res.data);
+    requestChunks.push(currentChunk);
+
+    /* 
+      Throttle the processing of these chunks, so that Google Slides
+      never sends more than one chunk every 2 seconds. This keeps us
+      from blowing file.io's limit in any 1 second window
+    */
+    const DELAY_BTW_REQUESTS = 2000; 
+    const bar = new cliProgress.SingleBar({
+      format: 'Sending {value}/{total} request batches to google',
+      hideCursor: true
+    });
+    bar.start(requestChunks.length, 0);
+    for await (const [i, chunk] of requestChunks.entries()) {
+      bar.increment();
+      batch.requests = chunk;
+      let response = await this.api.presentations.batchUpdate({
+        presentationId: this.presentation.presentationId,
+        requestBody: batch,
+      });
+      debug('API response: %O', response.data);
+      await sleep(DELAY_BTW_REQUESTS);
+    }
+    bar.stop();
   }
 
   /**
