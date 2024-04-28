@@ -22,8 +22,7 @@ import {
   VideoDefinition,
 } from '../slides.js';
 import {v1 as uuid} from 'uuid';
-import pkg from 'lodash';
-const {matches, find} = pkg;
+import {isDeepStrictEqual}  from 'util';
 import {Stylesheet} from './css.js';
 import assert from 'assert';
 import {Element} from 'parse5';
@@ -102,7 +101,6 @@ export class Context {
   public startStyle(newStyle: StyleDefinition): void {
     const previousStyle = this.currentStyle();
     const style = Object.assign({}, newStyle, previousStyle);
-    //console.log('@', JSON.stringify(style), this.text);
     style.start = this.text?.rawText.length ?? 0;
     this.styles.push(style);
     //console.log('started a style.',style,'stack depth is', this.styles.length);
@@ -121,9 +119,10 @@ export class Context {
     if(Object.keys(style).filter(k=>['start', 'end'].includes(k)).length == 0) {
       return;
     }
-    if (find(this.text.textRuns, matches(style))) {
+    if (this.text.textRuns.find(run => isDeepStrictEqual(run, style))) {
       return; // Ignore duplicate ranges
     }
+
     this.text.textRuns.push(style);
     //console.log('finished a style. stack depth is', this.styles.length);
   }
