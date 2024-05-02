@@ -232,13 +232,11 @@ export default class SlideGenerator {
     // process each image, throttling if it's an upload
     if(upload && (images.length > 0)) {
       console.log("Uploading images for this slide deck to file.io");
-      //const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
       const bar = new cliProgress.SingleBar({
         format: 'Sending {value}/{total} image files to file.io',
         hideCursor: true
       });
       bar.start(images.length, 0);
-
       // make sure to avoid going over 8 requests/sec
       // 1) space out requests every 150ms
       // 2) if we've uploaded 7 images, wait an extra 500
@@ -254,9 +252,7 @@ export default class SlideGenerator {
     }
 
     await Promise.all(promises);
-    if(upload) {
-      console.log(JSON.stringify(images.map(i =>i.url) ,null,2))
-    }
+    //if(upload) { console.log(JSON.stringify(images.map(i =>i.url), null, 2)); }
   }
   protected async generateImages(): Promise<void> {
     return this.processImages(maybeGenerateImage);
@@ -271,7 +267,7 @@ export default class SlideGenerator {
       const parsedUrl = new URL(image.url);
       // if it's not a file, just terminate
       if (parsedUrl.protocol !== 'file:') {
-        return Promise.reject(`The url ${parsedUrl}was not a valid file`);
+        return Promise.reject(new Error(`The url ${parsedUrl}was not a valid file`));
       }
       // if we've already uploaded it, use the cached link
       else if(urlCache[parsedUrl.pathname]) { 
@@ -279,8 +275,8 @@ export default class SlideGenerator {
         return Promise.resolve();
       }
       // reject the promise if we're not allowed to upload
-      else if (!this.allowUpload) {
-        return Promise.reject('Local images require --use-fileio option');
+      else if (!this.allowUpload || !this.fileIO_key) {
+        return Promise.reject(new Error('Local images require --use-fileio option with a valid key!'));
       }
       else {
         image.url = await uploadLocalImage(parsedUrl.pathname, this.fileIO_key);

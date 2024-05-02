@@ -113,11 +113,11 @@ function handleError(err) {
   if(err && err.errors && err.errors[0] && err.errors[0].message) {
     let errorString = '❌ Unable to generate slides:\n';
     errorString += err.errors[0].message + '\n';
-    const reqIdx = err.errors[0].message.match(/requests\[([0-9]+)\]/)[1];
+    const reqMatch = err.errors[0].message.match(/requests\[([0-9]+)\]/);
     // if there's a specific request that went bad, print it
-    if(reqIdx && err?.config?.data?.requests) {
+    if(reqMatch && err?.config?.data?.requests) {
       errorString += 'The request that failed was:\n'
-      errorString += JSON.stringify(err.config.data.requests[reqIdx], null, 2);
+      errorString += JSON.stringify(err.config.data.requests[reqMatch[1]], null, 2);
     }
     console.error(errorString);  
   } else {

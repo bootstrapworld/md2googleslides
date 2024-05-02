@@ -55,17 +55,17 @@ async function uploadLocalImage(filePath: string, key?: string): Promise<string>
         if(!responseJSON.success){ throw responseJSON; }
         debug('Temporary link: %s', responseJSON.link);
         return responseJSON.link;
-      })
-      .catch(error => {
-        debug('Unable to upload file: %O', error);
-        if(error.status == 492 || error.code == 'TOO_MANY_REQUESTS') {
-          console.error(`\n\n❌ Too many image requests/sec with file.io! 
-   Someone else probably is upoading images with the same API key right now.
-   Please wait a few seconds and try again.\n\n`);
-        }
-        console.error('Error uploading file:', error);
-        throw error;
       });
+  } catch(e : any) {
+    debug('Unable to upload file: %O', e);
+    if(e.status == 492 || e.code == 'TOO_MANY_REQUESTS') {
+      console.error(`\n\n❌ Too many image requests/sec with file.io! 
+Someone else probably is upoading images with the same API key right now.
+Please wait a few seconds and try again.\n\n`);
+    }
+
+    console.error('Error uploading file:', e);
+    throw e;
   } finally {
     stream.destroy();
   }

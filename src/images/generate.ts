@@ -43,13 +43,13 @@ async function maybeGenerateImage(
   assert(image.type);
 
   const imageType = image.type.trim().toLowerCase();
-
   const renderer = renderers[imageType];
   if (renderer === undefined) {
     throw 'Unsupported generated image: ' + image.source;
   }
   const filePath = await renderer(image);
   image.url = 'file://' + filePath;
+  //image.type = 'svg';
   debug('Local image path: %s', image.url);
   return image;
 }
