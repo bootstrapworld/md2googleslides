@@ -51,7 +51,6 @@ const parser = markdownIt(mdOptions)
 
 function parseMarkdown(markdown: string): Token[] {
   const parseTree = parser.parse(markdown, {});
-  //console.log(JSON.stringify(parseTree, null, 4))
   return parseTree;
 }
 

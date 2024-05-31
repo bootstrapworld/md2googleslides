@@ -585,6 +585,7 @@ export default function extractSlides(
   stylesheet?: string
 ): SlideDefinition[] {
   const tokens = parseMarkdown(markdown);
+  //console.log(JSON.stringify(tokens,null,2))
   const css = parseStyleSheet(stylesheet);
   const context = new Context(css);
   ruleSet = fullTokenRules; // TODO - Make not global
