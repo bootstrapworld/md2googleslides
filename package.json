@@ -3,8 +3,8 @@
   "version": "0.5.1",
   "description": "Convert Markdown to Google Slides",
   "engines": {
-    "npm": ">=8.19.0",
-    "node": ">=16.0.0 <22.0.0"
+    "npm": ">=10.2.0",
+    "node": ">=21.7.3"
   },
   "type": "module",
   "exports": "index.js",
@@ -68,7 +68,7 @@
     "markdown-it-video": "^0.6.3",
     "mathjax-full": "^3.2.2",
     "mkdirp": "^3.0.1",
-    "native-css": "^1.2.5",
+    "native-css": "^2.0.0",
     "opener": "^1.5.2",
     "parse-color": "^1.0.0",
     "probe-image-size": "^7.2.3",
@@ -82,10 +82,8 @@
   "devDependencies": {
     "@babel/cli": "7.24.1",
     "@babel/core": "7.24.4",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
-    "@babel/plugin-transform-class-properties": "7.24.1",
-    "@babel/plugin-transform-object-rest-spread": "^7.24.1",
+    "@babel/plugin-transform-class-properties": "7.24.7",
+    "@babel/plugin-transform-object-rest-spread": "^7.24.7",
     "@babel/preset-env": "7.24.4",
     "@babel/preset-typescript": "7.24.1",
     "@babel/register": "7.23.7",
@@ -115,6 +113,11 @@
     "nock": "^13.5.4",
     "parse5": "^6.0.1",
     "typescript": "5.4.5"
+  },
+  "overrides": {
+    "native-css": {
+       "css": "^3.0.0"
+     }
   },
   "bin": {
     "md2gslides": "bin/md2gslides.js"
