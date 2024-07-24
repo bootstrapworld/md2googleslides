@@ -70,6 +70,7 @@
     "mkdirp": "^3.0.1",
     "native-css": "^2.0.0",
     "opener": "^1.5.2",
+    "parse5": "^6.0.1",
     "parse-color": "^1.0.0",
     "probe-image-size": "^7.2.3",
     "promise-retry": "^2.0.1",
@@ -111,7 +112,6 @@
     "mocha": "10.4.0",
     "mock-fs": "5.2.0",
     "nock": "^13.5.4",
-    "parse5": "^6.0.1",
     "typescript": "5.4.5"
   },
   "overrides": {
