@@ -328,9 +328,7 @@ export function calculateFontSize(
     // get the measurements of the current multiline string
     const metrics = ctx.measureText(lines.join('\n'));
     // the emAcent/Decent values do exist, it's the types that are wrong from canvas
-    // @ts-expect-error
     const emAcent = metrics.emHeightAscent as number;
-    // @ts-expect-error
     const emDecent = metrics.emHeightDescent as number;
     // get dimensions in PT, and compare to element size
     const height = convertPXtoPT(emAcent + emDecent) + verticalWhiteSpace;
