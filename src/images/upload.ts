@@ -38,7 +38,7 @@ async function uploadLocalImage(filePath: string, key?: string): Promise<string>
     data.append('expires', '5m');
     data.append('autoDelete', 'true');
 
-    const request : RequestInfo = new Request('https://file.io', {
+    const request : RequestInfo = new Request('https://old-api.file.io', {
       method: 'POST',
       body: data,
     });
@@ -49,7 +49,7 @@ async function uploadLocalImage(filePath: string, key?: string): Promise<string>
     }
 
     // Make a POST request using fetch
-    return fetch('https://file.io', request)
+    return fetch('https://old-api.file.io', request)
       .then(response => response.json())
       .then(responseJSON => {
         if(!responseJSON.success){ throw responseJSON; }
