@@ -18,6 +18,7 @@ import {createLowlight, common} from 'lowlight'
 import scheme from 'highlight.js/lib/languages/scheme'
 import pyret from 'highlightjs-bootstrap/src/pyret.js'
 import python from 'highlight.js/lib/languages/python'
+import javascript from 'highlight.js/lib/languages/javascript'
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
 import {StyleDefinition} from '../slides.js';
@@ -95,7 +96,7 @@ function highlightSyntax(
   language: string | undefined,
   context: Context
 ): void {
-  const lowlight = createLowlight();
+  const lowlight = createLowlight(common);
   lowlight.register({scheme});
   lowlight.register({pyret});
 
