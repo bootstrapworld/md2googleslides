@@ -234,7 +234,7 @@ export default class SlideGenerator {
       console.log("Uploading images for this slide deck to file.io");
       const bar = new cliProgress.SingleBar({
         format: 'Sending {value}/{total} image files to file.io',
-        hideCursor: true
+        hideCursor: false
       });
       bar.start(images.length, 0);
       // make sure to avoid going over 8 requests/sec
@@ -389,7 +389,7 @@ export default class SlideGenerator {
     const DELAY_BTW_REQUESTS = 2000; 
     const bar = new cliProgress.SingleBar({
       format: 'Sending {value}/{total} request batches to google',
-      hideCursor: true
+      hideCursor: false
     });
     bar.start(requestChunks.length, 0);
     for await (const [i, chunk] of requestChunks.entries()) {
