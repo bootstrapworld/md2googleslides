@@ -265,6 +265,7 @@ export default class SlideGenerator {
     ): Promise<void> => {
       assert(image.url);
       const parsedUrl = new URL(image.url);
+
       // if it's not a file, just terminate
       if (parsedUrl.protocol !== 'file:') {
         return Promise.reject(new Error(`The url ${parsedUrl}was not a valid file`));
