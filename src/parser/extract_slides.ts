@@ -61,7 +61,6 @@ function isVideo(token: any): token is VideoToken {
 }
 
 function processMarkdownToken(token: Token, context: Context): void {
-  //console.log('@processing token:', token);
   debug('Token: %O', token);
   const rule = ruleSet[token.type];
   if (rule) {

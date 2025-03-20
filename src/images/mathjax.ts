@@ -64,7 +64,6 @@ function addOrMergeStyles(svg: string, style?: string): string {
 
 async function renderMathJax(image: ImageDefinition): Promise<string> {
   debug('Generating math image: %O', image);
-  console.log(JSON.stringify(image, null, 2))
   assert(image.source);
   const svg = get_mathjax_svg(image.source);
   image.source = addOrMergeStyles(svg, image.style);
