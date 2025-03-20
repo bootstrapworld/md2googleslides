@@ -61,6 +61,7 @@ function isVideo(token: any): token is VideoToken {
 }
 
 function processMarkdownToken(token: Token, context: Context): void {
+  //console.log('@processing token:', token);
   debug('Token: %O', token);
   const rule = ruleSet[token.type];
   if (rule) {
@@ -543,14 +544,13 @@ fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
   context.endStyle();
   context.row.push(context.text);
   context.startTextBlock();
-  //console.log('after td/th_close:', JSON.stringify(context, (k,v) => k=="css"? undefined : v, 4));
 };
 
-fullTokenRules['generated_image'] = (token, context) => {
+fullTokenRules['math_block'] = (token, context) => {
   assert(context.currentSlide);
   const image = {
     source: token.content,
-    type: token.info.trim(),
+    type: "math",
     width: 0,
     height: 0,
     style: attr(token, 'style'),
@@ -558,15 +558,7 @@ fullTokenRules['generated_image'] = (token, context) => {
     offsetX: 0,
     offsetY: 0,
   };
-  const padding = attr(token, 'pad');
-  if (padding) {
-    image.padding = parseInt(padding);
-  }
-  if (hasClass(token, 'background')) {
-    context.currentSlide.backgroundImage = image;
-  } else {
-    context.images.push(image);
-  }
+  context.images.push(image);
 };
 
 /**
@@ -585,7 +577,6 @@ export default function extractSlides(
   stylesheet?: string
 ): SlideDefinition[] {
   const tokens = parseMarkdown(markdown);
-  //console.log(JSON.stringify(tokens,null,2))
   const css = parseStyleSheet(stylesheet);
   const context = new Context(css);
   ruleSet = fullTokenRules; // TODO - Make not global
