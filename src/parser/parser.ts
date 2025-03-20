@@ -26,10 +26,12 @@ import expandTabs from 'markdown-it-expand-tabs';
 import video from 'markdown-it-video';
 // @ts-ignore
 import customFence from 'markdown-it-fence';
+// @ts-ignore
+import mathjax3 from 'markdown-it-mathjax3';
 
 function generatedImage(md: unknown): void {
   return customFence(md, 'generated_image', {
-    marker: '$',
+    marker: '@',
     validate: () => true,
   });
 }
@@ -46,6 +48,7 @@ const parser = markdownIt(mdOptions)
   .use(lazyHeaders)
   .use(emoji, {shortcuts: {}})
   .use(expandTabs, {tabWidth: 4})
+  .use(mathjax3)
   .use(generatedImage)
   .use(video, {youtube: {width: 640, height: 390}});
 

@@ -543,7 +543,21 @@ fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
   context.endStyle();
   context.row.push(context.text);
   context.startTextBlock();
-  //console.log('after td/th_close:', JSON.stringify(context, (k,v) => k=="css"? undefined : v, 4));
+};
+
+fullTokenRules['math_block'] = (token, context) => {
+  assert(context.currentSlide);
+  const image = {
+    source: token.content,
+    type: "math",
+    width: 0,
+    height: 0,
+    style: attr(token, 'style'),
+    padding: 0,
+    offsetX: 0,
+    offsetY: 0,
+  };
+  context.images.push(image);
 };
 
 fullTokenRules['generated_image'] = (token, context) => {
@@ -585,7 +599,6 @@ export default function extractSlides(
   stylesheet?: string
 ): SlideDefinition[] {
   const tokens = parseMarkdown(markdown);
-  //console.log(JSON.stringify(tokens,null,2))
   const css = parseStyleSheet(stylesheet);
   const context = new Context(css);
   ruleSet = fullTokenRules; // TODO - Make not global
