@@ -560,6 +560,29 @@ fullTokenRules['math_block'] = (token, context) => {
   context.images.push(image);
 };
 
+fullTokenRules['generated_image'] = (token, context) => {
+  assert(context.currentSlide);
+  const image = {
+    source: token.content,
+    type: token.info.trim(),
+    width: 0,
+    height: 0,
+    style: attr(token, 'style'),
+    padding: 0,
+    offsetX: 0,
+    offsetY: 0,
+  };
+  const padding = attr(token, 'pad');
+  if (padding) {
+    image.padding = parseInt(padding);
+  }
+  if (hasClass(token, 'background')) {
+    context.currentSlide.backgroundImage = image;
+  } else {
+    context.images.push(image);
+  }
+};
+
 /**
  * Parse the markdown and converts it into a form more suitable
  * for creating slides.
