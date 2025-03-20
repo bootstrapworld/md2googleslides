@@ -29,19 +29,19 @@ import customFence from 'markdown-it-fence';
 // @ts-ignore
 import mathjax3 from 'markdown-it-mathjax3';
 
-const mdOptions = {
-  html: true,
-  langPrefix: 'highlight ',
-  linkify: false,
-  breaks: false,
-};
-
 function generatedImage(md: unknown): void {
   return customFence(md, 'generated_image', {
     marker: '@',
     validate: () => true,
   });
 }
+
+const mdOptions = {
+  html: true,
+  langPrefix: 'highlight ',
+  linkify: false,
+  breaks: false,
+};
 
 const parser = markdownIt(mdOptions)
   .use(attrs)
