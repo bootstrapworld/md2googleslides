@@ -362,8 +362,7 @@ Images referencing local paths temporarily uploaded and hosted to [file.io](http
 is an emphemeral file serving service that generates short-lived random URLs to the upload file and deletes
 content shortly after use.
 
-Since local images are uploaded to a thrid party, explicit opt-in is required to use this feature.
-Include the `--use-fileio` option to opt-in to uploading images. This applies to file-based images as well
+Image uploading is handled by Google Drive, since we already need to log into Google services to make the slides to begin with! This applies to file-based images as well
 as automatically rasterized content like math expressions and SVGs.
 
 ### Image rasterization
@@ -371,7 +370,7 @@ as automatically rasterized content like math expressions and SVGs.
 Slides can also include generated images, using `$$$` fenced blocks
 for the data. Currently supported generated images are math expression (TeX
 and MathML) as well as SVG. Rasterized images are treated like local images are require
-opt-in to uploading images to a 3rd party service via the `--use-fileio` option.
+opt-in to uploading images to Google Drive.
 
 Using TeX:
 

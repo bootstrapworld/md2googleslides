@@ -100,12 +100,6 @@ parser.add_argument('-c', '--copy', {
   dest: 'copy',
   required: false,
 });
-parser.add_argument('--use-fileio', {
-  help: 'Acknolwedge local and generated images are uploaded to https://file.io',
-  action: 'store_true',
-  dest: 'useFileio',
-  required: false,
-});
 
 const args = parser.parse_args();
 
@@ -247,10 +241,7 @@ function generateSlides(slideGenerator) {
   const input = fs.readFileSync(source, {encoding: 'UTF-8'});
   const css = loadCss(args.style);
 
-  return slideGenerator.generateFromMarkdown(input, {
-    css: css,
-    useFileio: args.useFileio,
-  });
+  return slideGenerator.generateFromMarkdown(input, { css: css });
 }
 
 function displayResults(id) {

@@ -34,7 +34,7 @@ const USER_HOME =
 const STORED_API_KEY_PATH = path.join(
   USER_HOME,
   '.md2googleslides',
-  'fileio_key.json'
+  'credentials.json'
 );
 
 // wait a given number of milliseconds
@@ -67,8 +67,7 @@ export default class SlideGenerator {
   private slides: SlideDefinition[] = [];
   private api: SlidesV1.Slides;
   private presentation: SlidesV1.Schema$Presentation;
-  private allowUpload = false;
-  private fileIO_key?: string;
+  private drive: any;
   /**
    * @param {Object} api Authorized API client instance
    * @param {Object} presentation Initial presentation data
@@ -76,23 +75,16 @@ export default class SlideGenerator {
    */
   public constructor(
     api: SlidesV1.Slides,
-    presentation: SlidesV1.Schema$Presentation
+    presentation: SlidesV1.Schema$Presentation,
+    auth: Auth.OAuth2Client,
   ) {
     this.api = api;
     this.presentation = presentation;
 
-    // Load and parse api key from fileio_api.json file. (must 
-    // be stored in ~/.md2googleslides_)
-    let data; // needs to be scoped outside of try-catch
     try {
-      data = fs.readFileSync(STORED_API_KEY_PATH, 'utf8');
-      this.fileIO_key = JSON.parse(data).api_key;
+      this.drive = google.drive({version: 'v3', auth});
     } catch (err) {
-      console.log('Error loading api key data:', err);
-    }
-    if (!!this.fileIO_key && typeof this.fileIO_key !== "string") {
-      this.fileIO_key = undefined;
-      console.log('No valid api key was found. Image uploading will be limited');
+      console.error('Error getting access to Google Drive:', err);
     }
   }
 
@@ -115,7 +107,7 @@ export default class SlideGenerator {
       },
     });
     const presentation = res.data;
-    return new SlideGenerator(api, presentation);
+    return new SlideGenerator(api, presentation, oauth2Client);
   }
 
   /**
@@ -162,7 +154,7 @@ export default class SlideGenerator {
         throw e;
       });
     const presentation = res.data;
-    return new SlideGenerator(api, presentation);
+    return new SlideGenerator(api, presentation, oauth2Client);
   }
 
   /**
@@ -170,16 +162,14 @@ export default class SlideGenerator {
    *
    * @param {String} markdown Markdown to import
    * @param css
-   * @param useFileio
    * @returns {Promise.<String>} ID of generated slide
    */
   public async generateFromMarkdown(
     markdown: string,
-    {css, useFileio}: {css: string; useFileio: boolean}
+    {css}: {css: string;}
   ): Promise<string> {
     assert(this.presentation?.presentationId);
     this.slides = extractSlides(markdown, css);
-    this.allowUpload = useFileio;
     await this.generateImages();
     await this.probeImageSizes();
     await this.uploadLocalImages();
@@ -275,12 +265,8 @@ export default class SlideGenerator {
         image.url = urlCache[parsedUrl.pathname];
         return Promise.resolve();
       }
-      // reject the promise if we're not allowed to upload
-      else if (!this.allowUpload || !this.fileIO_key) {
-        return Promise.reject(new Error('Local images require --use-fileio option with a valid key!'));
-      }
       else {
-        image.url = await uploadLocalImage(parsedUrl.pathname, this.fileIO_key);
+        image.url = await uploadLocalImage(parsedUrl.pathname, this.drive);
         urlCache[parsedUrl.pathname] = image.url;
         return Promise.resolve();
       }

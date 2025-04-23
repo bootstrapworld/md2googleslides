@@ -28,42 +28,40 @@ const debug = Debug('md2gslides');
  * @param {string} filePath -- Local path to image to upload
  * @returns {Promise<string>} URL to hosted image
  */
-async function uploadLocalImage(filePath: string, key?: string): Promise<string> {
+async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
   debug('Registering file %s', filePath);
   const stream = fs.createReadStream(filePath);
+  const filename = filePath.split('/').pop();
 
   try {
-    const data = new FormData();
-    data.append('file', await blob(stream), path.basename(filePath));
-    data.append('expires', '5m');
-    data.append('autoDelete', 'true');
+    const fileMetadata = {
+      name: filename,
+      parents: ['1kfhzbGk2HPD2xkIphI1x1-ObwCzQWSCx']
+    };
+    const media = { body: stream };
 
-    const request : RequestInfo = new Request('https://old-api.file.io', {
-      method: 'POST',
-      body: data,
+    const response = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id' // Get the file ID after upload
     });
 
-    // add the authorization key, if one is defined
-    if(key) {
-      request.headers.append("Authorization", key);
-    }
+    // If the upload is successful, get the fileId
+    const fileId = response.data.id;
 
-    // Make a POST request using fetch
-    return fetch('https://old-api.file.io', request)
-      .then(response => response.json())
-      .then(responseJSON => {
-        if(!responseJSON.success){ throw responseJSON; }
-        debug('Temporary link: %s', responseJSON.link);
-        return responseJSON.link;
-      });
-  } catch(e : any) {
-    debug('Unable to upload file: %O', e);
-    if(e.status == 492 || e.code == 'TOO_MANY_REQUESTS') {
-      console.error(`\n\n❌ Too many image requests/sec with file.io! 
-Someone else probably is upoading images with the same API key right now.
-Please wait a few seconds and try again.\n\n`);
-    }
+    // Set the file at that ID to be world-readable
+    await drive.permissions.create({
+      fileId: fileId,
+      resource: {
+        'type': 'anyone',
+        'role': 'reader'
+      }
+    });
 
+    // return the URL to the newly-uploaded, world-readable file
+    return `https://drive.usercontent.google.com/uc?id=${fileId}&authuser=0&export=download`
+
+  } catch (e) {
     console.error('Error uploading file:', e);
     throw e;
   } finally {
