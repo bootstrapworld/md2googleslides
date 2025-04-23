@@ -220,20 +220,18 @@ export default class SlideGenerator {
     });
 
     // process each image, throttling if it's an upload
+    const MAX_IMAGES_PER_SEC = 1000
     if(upload && (images.length > 0)) {
-      console.log("Uploading images for this slide deck to file.io");
+      console.log("Uploading images for this slide deck to storage bucket");
       const bar = new cliProgress.SingleBar({
-        format: 'Sending {value}/{total} image files to file.io',
+        format: 'Sending {value}/{total} image files to storage bucket',
         hideCursor: false
       });
       bar.start(images.length, 0);
-      // make sure to avoid going over 8 requests/sec
-      // 1) space out requests every 150ms
-      // 2) if we've uploaded 7 images, wait an extra 500
+      // make sure to avoid going over MAX_IMAGES_PER_SEC requests/sec
       for(const [i, image] of images.entries()) {
         bar.increment();
-        await sleep(150);
-        if(i%6 == 0) { await sleep(250); }
+        if(i%MAX_IMAGES_PER_SEC == 0) { await sleep(250); }
         promises.push(fn(image));
       }
       bar.stop();
@@ -344,13 +342,18 @@ export default class SlideGenerator {
 
     /* 
       IMAGE THROTTLING
-      If the slide deck includes images, we risk hitting file.io's 8 req/sec 
-      limit. To deal with this, we process the requests *in-order*, splitting
-      them into chunks. Each chunk is an array of requests: 
+      If the slide deck includes images, we risk hitting our storage bucket's
+      request/sec limit. To deal with this, we process the requests *in-order*,
+      splitting them into chunks. Each chunk is an array of requests:
        - falling in the same order they were before
        - createImage requests happen <= MAX_IMAGES_PER_CHUNK times in each chunk
+
+       NOTE: As of 4/23/25, we use Google Drive as our bucket. It has essentially
+       *infinite* requests/sec, so I've cranked up MAX_IMAGES_PER_CHUNK to something
+       really high. Leaving this infrastructure in place in case we need to switch
+       again, and throttling becomes an issue.
     */
-    const MAX_IMAGES_PER_CHUNK = 6;  
+    const MAX_IMAGES_PER_CHUNK = 1000;
     let requestChunks:SlidesV1.Schema$Request[][] = [];
     let currentChunk:SlidesV1.Schema$Request[] = [];
     let createImageRequestCount = 0;
@@ -369,10 +372,15 @@ export default class SlideGenerator {
 
     /* 
       Throttle the processing of these chunks, so that Google Slides
-      never sends more than one chunk every 2 seconds. This keeps us
-      from blowing file.io's limit in any 1 second window
+      never sends more than one chunk every X seconds. This keeps us
+      from blowing the request/sec limit in any X second window
+
+      NOTE: as of 4/23/24, we use Google for our bucket. Google
+      has no such throttling limit, so I've set DELAY_BTW_REQUESTS to 0.
+      Leaving this infrastructure in place in case we need to switch
+      again, and throttling becomes an issue.
     */
-    const DELAY_BTW_REQUESTS = 2000; 
+    const DELAY_BTW_REQUESTS = 0;
     const bar = new cliProgress.SingleBar({
       format: 'Sending {value}/{total} request batches to google',
       hideCursor: false
