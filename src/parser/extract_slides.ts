@@ -545,6 +545,7 @@ fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
   context.startTextBlock();
 };
 
+fullTokenRules['math_inline'] =
 fullTokenRules['math_block'] = (token, context) => {
   assert(context.currentSlide);
   const image = {
