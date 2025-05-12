@@ -389,11 +389,14 @@ fullTokenRules['heading_close'] = (token, context) => {
 
 fullTokenRules['html_block'] = (token, context) => {
   assert(context.currentSlide);
-  const re = /<!--([\s\S]*)-->/m;
-  const match = re.exec(token.content);
-  if (match === null) {
-    throw new Error('Unsupported HTML block: ' + token.content);
-  }
+  // NOTE(Emmanuel): not all html blocks are comments,
+  // so we're going to try relaxing this requirement
+
+  // const re = /<!--([\s\S]*)-->/m;
+  // const match = re.exec(token.content);
+  // if (match === null) {
+  //   throw new Error('Unsupported HTML block: ' + token.content);
+  // }
   // Since the notes can contain unparsed markdown, create a new environment
   // to process it so we don't inadvertently lose state. Just carry
   // forward the notes from the current slide to append to
@@ -405,7 +408,8 @@ fullTokenRules['html_block'] = (token, context) => {
     subContext.startTextBlock();
   }
   // remove any tab characters, which are not allowed in markdown
-  const tokens = parseMarkdown(match[1].replaceAll('\t',''));
+  //const tokens = parseMarkdown(match[1].replaceAll('\t',''));
+  const tokens = parseMarkdown(token.content.replaceAll('\t',''));
   processTokens(tokens, subContext);
   if (subContext.text && subContext.text.rawText.trim().length) {
     context.currentSlide.notes = subContext.text;
