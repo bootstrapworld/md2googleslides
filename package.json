@@ -75,7 +75,7 @@
     "parse5": "^6.0.1",
     "probe-image-size": "^7.2.3",
     "promise-retry": "^2.0.1",
-    "puppeteer": "^23.11.1",
+    "puppeteer": "^24.22.3",
     "sharp": "^0.33.5",
     "tmp": "0.2.3",
     "tmp-promise": "^3.0.3",
