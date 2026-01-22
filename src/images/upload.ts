@@ -16,7 +16,6 @@ import Debug from 'debug';
 import fs from 'fs';
 import * as path from 'path';
 import { blob } from 'node:stream/consumers';
-import { FormData } from 'formdata-polyfill/esm.min.js'
 
 const debug = Debug('md2gslides');
 
