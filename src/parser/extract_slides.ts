@@ -207,7 +207,10 @@ inlineTokenRules['paragraph_close'] = (token, context) => {
     // Empty column marker, just clear flag
     context.markerParagraph = false;
   } else {
-    context.appendText('\n');
+    const hasTrailingNewline = context.text && /[\r\n]$/.test(context.text.rawText);
+
+    // Only add a trailing newline if none exists
+    if (context.text && !hasTrailingNewline) { context.appendText('\n'); }
   }
   context.endStyle();
 };

@@ -234,7 +234,7 @@ const DEFAULT_STYLE = {
   spacingMode: 'NEVER_COLLAPSE'
 }
 
-const MIN_SIZE = 14; // Anything smaller than 14pt is not readable on a projector
+const MIN_SIZE = 15; // Anything smaller than 15pt is not readable on a projector
 
 const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all sizes
 
@@ -259,7 +259,7 @@ export function calculateFontSize(
     return cachedFontCalculations.get(key); 
   }
 
-  // Dreate a canvas with the same size as the element. This probably doesn't matter,
+  // Create a canvas with the same size as the element. This probably doesn't matter,
   // as we're only measuring a fake representation of the text with ctx.measureText
   const sizePT = getElementSizePT(element);
   // adjust the size to account for space lost to padding
