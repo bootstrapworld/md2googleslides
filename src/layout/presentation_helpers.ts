@@ -324,7 +324,9 @@ export function calculateFontSize(
       sizePT.width - amountPT("indentStart") - amountPT("indentEnd")
     ) / WTF_CHAR_WIDTH_HACK;
 
-    const lines = wrapLines(text.rawText, effectiveWidthPX);
+    // trim trailing newline to avoid phantom empty paragraph
+    const trimmedText = text.rawText.trimEnd();
+    const lines = wrapLines(trimmedText, effectiveWidthPX);
 
     if (constraints === "horizontal" && lines.length > 1) return true;
 
@@ -344,9 +346,21 @@ export function calculateFontSize(
     const interLineGapPX = avgLineHeightPX * (computedStyle.lineSpacing / 100 - 1);
     const totalHeightPX = totalEmHeightPX + (lines.length - 1) * interLineGapPX;
 
-    // spaceAbove/spaceBelow are paragraph-level — apply once per hard break only
-    const hardBreaks = (text.rawText.match(/\n/g)?.length ?? 0) + 1;
-    const paragraphSpacingPT = hardBreaks * (amountPT("spaceAbove") + amountPT("spaceBelow"));
+    // spaceBelow/spaceAbove apply *between* paragraphs only, not after the last one
+    // Sum spaceBelow/spaceAbove from each paragraph's actual style,
+    // excluding the last paragraph (spacing applies *between* paragraphs).
+    // This avoids incorrectly inheriting a template-level spaceBelow onto every \n.
+    const paragraphMarkers = element.shape?.text?.textElements
+      ?.filter(te => te.paragraphMarker)
+      ?? [];
+
+    // drop the last marker — its spaceBelow has nothing after it to space
+    const paragraphSpacingPT = paragraphMarkers.slice(0, -1).reduce((sum, te) => {
+      const style = te.paragraphMarker?.style;
+      const below = style?.spaceBelow?.magnitude ?? 0;
+      const above = style?.spaceAbove?.magnitude ?? 0;
+      return sum + below + above;
+    }, 0);
 
     // compare raw canvas measurement against unmodified effective width
     const widthPT  = convertPXtoPT(maxLineWidthPX);
@@ -354,8 +368,6 @@ export function calculateFontSize(
 
     const effectiveWidthPT = sizePT.width - amountPT("indentStart") - amountPT("indentEnd");
     const effectiveHeightPT = sizePT.height;
-    console.log(`actual elt is ${effectiveWidthPT}x${effectiveHeightPT}`);
-    console.log(`at fontsize ${fontSize}, text is ${widthPT}x${heightPT}`);
     return widthPT > effectiveWidthPT || heightPT > effectiveHeightPT;
   };
 
@@ -374,7 +386,6 @@ export function calculateFontSize(
     fontSize = lo;
   }
 
-  console.log(`going with fontSize=${fontSize}`);
   cachedFontCalculations.set(key, fontSize);
   return fontSize;
 }

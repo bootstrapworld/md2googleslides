@@ -322,6 +322,7 @@ export default class SlideGenerator {
       const layout = matchLayout(this.presentation, slide);
       layout.appendContentRequests(batch.requests);
     }
+    //console.log(JSON.stringify(batch, null, 2));
     return batch;
   }
 
