@@ -234,12 +234,12 @@ const DEFAULT_STYLE = {
   spacingMode: 'NEVER_COLLAPSE'
 }
 
-const MIN_SIZE = 15; // Anything smaller than 15pt is not readable on a projector
+const MIN_SIZE = 10; // Anything smaller than 15pt is not readable on a projector
 
 const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all sizes
 
 // in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
-const WTF_CHAR_WIDTH_HACK = 1.15; 
+const WTF_CHAR_WIDTH_HACK = 1.15;
 
 // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
 const cachedFontCalculations = new Map();
@@ -268,22 +268,19 @@ export function calculateFontSize(
   const canvas = createCanvas(sizePT.width, sizePT.height);
   const ctx = canvas.getContext('2d');
 
-  
   // starting with the default, merge style rules from oldest-to-youngest
   const computedStyle = Object.assign(
-    {}, DEFAULT_STYLE, // use '.at' instead of '[n]' below to salvage the ? operator
+    {}, DEFAULT_STYLE,
     ...ancestors.map(a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style)
   );
-  //console.log('inheritedProps', computedStyle)
 
   // try to extract all the font-sizes
   const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
   // try to extract all the font-weights
   const fontWeights = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.weightedFontFamily?.weight).filter((a): a is number => Number.isInteger(a)) ?? [];
-  // fallback to arial if not found, if there's more than one fontFamily used in a single element, we just pick the first one, no way i can think of
-  // to be smart here and not really necessary to create multiple strings with different fonts and calculate those, this seems to work fine
+  // fallback to arial if not found; if there's more than one fontFamily, just pick the first one
   const fontFamily = findByKey(element, 'fontFamily') ?? computedStyle.fontFamily;
-  // calulate the average as there can be different fonts with different weights within a single text element
+  // calculate the average as there can be different fonts with different weights within a single text element
   const averageFontWeight = fontWeights.reduce((a, n) => a + n, 0) / fontWeights.length;
   const averageFontSize = fontSizes.reduce((a, n) => a + n, 0) / fontSizes.length;
   // if the average font-weight is not a number, use the default
@@ -293,56 +290,91 @@ export function calculateFontSize(
   // if the input value is an empty string, don't bother with any calculations
   if (text.rawText.length === 0) { return fontSize; }
 
-  const estCharsPerLine = (): number => {
-    const numChars = Math.min(text.rawText.length, 100);
-    const avgCharWidth = ctx.measureText(text.rawText.substring(0, numChars)).width / numChars;
-    return convertPTtoPX(sizePT.width) / (avgCharWidth * WTF_CHAR_WIDTH_HACK);
-  }
-
   // convenience function: given a property, get its magnitude or produce zero
-  function amountPT(prop:string){ return computedStyle[prop].magnitude || 0; }
+  function amountPT(prop: string) { return computedStyle[prop].magnitude || 0; }
 
-  // used for the while loop, to continually resize the shape and multiline
-  // text, until it fits within the bounds of the element
-  const isOutsideBounds = (): boolean => {
-    ctx.font = `${fontWeight} ${fontSize}pt ${fontFamily}`;
-    
-    // # of hard AND wrapped lines - computed using the estimated chars per line at this size
-    // # of newlines - relevant for spaceAbove/spaceBelow/spaceBetween calculation
-    const lines = splitter(text.rawText, estCharsPerLine());
-    const newlines = text.rawText.match(/\\n/g)?.length || 1;
-
-    // if the only constraint is horizontal, we're outside bounds if there's more than one line
-    if ((constraints == "horizontal") && (lines.length > 1)) {
-      return true;
+  // Pixel-accurate line wrapping using canvas measurements, respecting hard breaks.
+  // Replaces the character-count-based splitter(), which was inaccurate for variable-width text.
+  const wrapLines = (text: string, maxWidthPX: number): string[] => {
+    const lines: string[] = [];
+    for (const hardLine of text.split('\n')) {
+      const words = hardLine.split(' ');
+      let current = '';
+      for (const word of words) {
+        const candidate = current ? `${current} ${word}` : word;
+        if (ctx.measureText(candidate).width > maxWidthPX && current) {
+          lines.push(current);
+          current = word;
+        } else {
+          current = candidate;
+        }
+      }
+      lines.push(current);
     }
-
-    // compute the horizontal and vertical whitespace in PT
-    // Horizontal: <indentStart> + <indentEnd>
-    // Vertical: <space below and above all n linebreaks> + <spacing between each line (n-1)>
-    const horizontalWhiteSpace = amountPT("indentStart") + amountPT("indentEnd");
-    const spaceAroundLines = newlines * (amountPT("spaceBelow") + amountPT("spaceAbove"))
-    const spaceBetweenLines = (newlines-1) * (computedStyle.lineSpacing/100 * fontSize)
-    const verticalWhiteSpace = spaceAroundLines + spaceBetweenLines;
-
-    // get the measurements of the current multiline string
-    const metrics = ctx.measureText(lines.join('\n'));
-    // the emAcent/Decent values do exist, it's the types that are wrong from canvas
-    const emAcent = metrics.emHeightAscent as number;
-    const emDecent = metrics.emHeightDescent as number;
-    // get dimensions in PT, and compare to element size
-    const height = convertPXtoPT(emAcent + emDecent) + verticalWhiteSpace;
-    const width  = convertPXtoPT(metrics.width) + horizontalWhiteSpace;
-    //console.log(`at ${fontSize}pt, text is ${width} x ${height}`)
-    return width > sizePT.width || height > sizePT.height;
+    return lines;
   };
 
-  //console.log(`fitting "${text.rawText}" into ${sizePT.width}pt x ${sizePT.height}pt. Constraints are ${constraints}`);
+  const isOutsideBounds = (): boolean => {
+    // use px units for canvas — pt is unreliable in node-canvas
+    ctx.font = `${fontWeight} ${convertPTtoPX(fontSize)}px ${fontFamily}`;
 
-  // continually loop over until the size of the text element is within bounds,
-  // decreasing by 0.25pt increments until it fits within the width
-  while (isOutsideBounds() && fontSize > MIN_SIZE) { fontSize = fontSize - 0.25; }
-  
+    // WTF_CHAR_WIDTH_HACK shrinks the allowed width to account for GSlides
+    // rendering characters wider than canvas does
+    const effectiveWidthPX = convertPTtoPX(
+      sizePT.width - amountPT("indentStart") - amountPT("indentEnd")
+    ) / WTF_CHAR_WIDTH_HACK;
+
+    const lines = wrapLines(text.rawText, effectiveWidthPX);
+
+    if (constraints === "horizontal" && lines.length > 1) return true;
+
+    // measure each line independently — canvas measureText does not handle '\n'
+    let maxLineWidthPX = 0;
+    let totalEmHeightPX = 0;
+    for (const line of lines) {
+      const m = ctx.measureText(line);
+      const lineHeightPX = (m.emHeightAscent as number) + (m.emHeightDescent as number);
+      maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
+      totalEmHeightPX += lineHeightPX;
+    }
+
+    // lineSpacing governs the gaps *between* lines, not below the last one.
+    // total = N em-boxes + (N-1) inter-line gaps
+    const avgLineHeightPX = totalEmHeightPX / lines.length;
+    const interLineGapPX = avgLineHeightPX * (computedStyle.lineSpacing / 100 - 1);
+    const totalHeightPX = totalEmHeightPX + (lines.length - 1) * interLineGapPX;
+
+    // spaceAbove/spaceBelow are paragraph-level — apply once per hard break only
+    const hardBreaks = (text.rawText.match(/\n/g)?.length ?? 0) + 1;
+    const paragraphSpacingPT = hardBreaks * (amountPT("spaceAbove") + amountPT("spaceBelow"));
+
+    // compare raw canvas measurement against unmodified effective width
+    const widthPT  = convertPXtoPT(maxLineWidthPX);
+    const heightPT = convertPXtoPT(totalHeightPX) + paragraphSpacingPT;
+
+    const effectiveWidthPT = sizePT.width - amountPT("indentStart") - amountPT("indentEnd");
+    const effectiveHeightPT = sizePT.height;
+    console.log(`actual elt is ${effectiveWidthPT}x${effectiveHeightPT}`);
+    console.log(`at fontsize ${fontSize}, text is ${widthPT}x${heightPT}`);
+    return widthPT > effectiveWidthPT || heightPT > effectiveHeightPT;
+  };
+
+  // Binary search converges in ~6-8 iterations vs potentially 100+ for linear step-down
+  let lo = MIN_SIZE;
+  let hi = fontSize;
+
+  // Edge case: if it already fits at the starting fontSize, skip the search entirely
+  if (isOutsideBounds()) {
+    while (hi - lo > 0.1) {
+      const mid = (lo + hi) / 2;
+      fontSize = mid;
+      if (isOutsideBounds()) hi = mid;
+      else lo = mid;
+    }
+    fontSize = lo;
+  }
+
+  console.log(`going with fontSize=${fontSize}`);
   cachedFontCalculations.set(key, fontSize);
   return fontSize;
 }
