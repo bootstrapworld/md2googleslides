@@ -18,7 +18,7 @@ import {SlideDefinition, ImageDefinition} from './slides.js';
 import matchLayout from './layout/match_layout.js';
 import {URL} from 'url';
 import {google, Auth, slides_v1 as SlidesV1} from 'googleapis';
-import uploadLocalImage from './images/upload.js';
+import uploadLocalImage, { UPLOAD_FOLDER_ID } from './images/upload.js';
 import probeImage from './images/probe.js';
 import maybeGenerateImage from './images/generate.js';
 import assert from 'assert';
@@ -398,6 +398,15 @@ export default class SlideGenerator {
       await sleep(DELAY_BTW_REQUESTS);
     }
     bar.stop();
+  }
+
+  public async clearUploadFolder(): Promise<void> {
+    const res = await this.drive.files.list({
+      q: `'${UPLOAD_FOLDER_ID}' in parents and trashed = false`,
+      fields: 'files(id)',
+    });
+    const files: Array<{id: string}> = res.data.files || [];
+    await Promise.all(files.map(file => this.drive.files.delete({ fileId: file.id })));
   }
 
   /**

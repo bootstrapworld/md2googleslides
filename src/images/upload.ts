@@ -19,6 +19,8 @@ import { blob } from 'node:stream/consumers';
 
 const debug = Debug('md2gslides');
 
+export const UPLOAD_FOLDER_ID = '1kfhzbGk2HPD2xkIphI1x1-ObwCzQWSCx';
+
 /**
  * Uploads a local file to temporary storage so it is HTTP/S accessible.
  *
@@ -35,7 +37,7 @@ async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
   try {
     const fileMetadata = {
       name: filename,
-      parents: ['1kfhzbGk2HPD2xkIphI1x1-ObwCzQWSCx']
+      parents: [UPLOAD_FOLDER_ID]
     };
     const media = { body: stream };
 

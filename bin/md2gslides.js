@@ -241,7 +241,8 @@ function generateSlides(slideGenerator) {
   const input = fs.readFileSync(source, {encoding: 'UTF-8'});
   const css = loadCss(args.style);
 
-  return slideGenerator.generateFromMarkdown(input, { css: css });
+  return slideGenerator.generateFromMarkdown(input, { css: css })
+    .then(id => slideGenerator.clearUploadFolder().then(() => id));
 }
 
 function displayResults(id) {
