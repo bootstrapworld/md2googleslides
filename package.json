@@ -75,8 +75,8 @@
     "probe-image-size": "^7.2.3",
     "promise-retry": "^2.0.1",
     "puppeteer": "^24.42.0",
-    "sharp": "^0.34.5",
-    "tmp": "0.2.3",
+    "sharp": "^0.35.4",
+    "tmp": "^0.2.7",
     "tmp-promise": "^3.0.3",
     "uuid": "^14.0.0"
   },
