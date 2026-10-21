@@ -126,7 +126,7 @@ function hello() {
 ---
 # ... or small
 
-```javascript {style="font-size: 8pt}
+```javascript {style="font-size: 8pt"}
 // Print hello
 function hello() {
   console.log('Hello little world');

@@ -533,6 +533,29 @@ describe('extractSlides', () => {
     });
   });
 
+  describe('with a code fence', () => {
+    it('should highlight when the info string has valid attributes', () => {
+      const slides = extractSlides(
+        '# Code\n\n```javascript {style="font-size: 8pt"}\nlet a = 1;\n```\n',
+      );
+      return expect(slides).to.have.nested.property('[0].bodies').length(1);
+    });
+
+    it('should not throw on a malformed attribute block', () => {
+      expect(() =>
+        extractSlides(
+          '# Code\n\n```javascript {style="font-size: 8pt}\nlet a = 1;\n```\n',
+        ),
+      ).not.to.throw();
+    });
+
+    it('should not throw on an unknown language', () => {
+      expect(() =>
+        extractSlides('# Code\n\n```notalanguage\nlet a = 1;\n```\n'),
+      ).not.to.throw();
+    });
+  });
+
   describe('with a custom layout', () => {
     const markdown = '{layout="my custom layout"}\n' + '# Title\n';
     const slides = extractSlides(markdown);

@@ -97,10 +97,13 @@ function highlightSyntax(
   lowlight.register({scheme});
   lowlight.register({pyret});
 
-  // if a language is provided, use that. Otherwise guess
+  // if a language is provided, use that. Otherwise guess. Only the first word
+  // of the info string is the language: markdown-it-attrs leaves a malformed
+  // attribute block (e.g. an unterminated quote) in the info string
+  const languageName = language?.split(/\s+/)[0];
   let highlightResult;
-  if (language) {
-    highlightResult = lowlight.highlight(language, content);
+  if (languageName && lowlight.registered(languageName)) {
+    highlightResult = lowlight.highlight(languageName, content);
   } else {
     highlightResult = lowlight.highlightAuto(content);
   }
