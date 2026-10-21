@@ -16,7 +16,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import jsonfile from 'jsonfile';
 import nock from 'nock';
-import chai from 'chai';
+import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {Auth} from 'googleapis';
 import SlideGenerator from '../src/slide_generator';

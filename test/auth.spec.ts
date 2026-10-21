@@ -16,7 +16,7 @@ import mockfs from 'mock-fs';
 import nock from 'nock';
 import fs from 'fs';
 import path from 'path';
-import chai from 'chai';
+import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import UserAuthorizer from '../src/auth';
 
