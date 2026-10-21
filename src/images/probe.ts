@@ -37,8 +37,9 @@ async function probeUrl(url: string): Promise<ImageSize> {
   return await retry(async doRetry => {
     try {
       return await probeImageSize(url);
-    } catch (err: any) {
-      if (retriableCodes.includes(err.code) || err.status >= 500) {
+    } catch (err) {
+      const {code, status} = err as {code?: string; status?: number};
+      if ((code && retriableCodes.includes(code)) || (status ?? 0) >= 500) {
         doRetry(err);
       }
       throw err;

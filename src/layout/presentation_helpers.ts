@@ -109,7 +109,7 @@ export function findPlaceholder(
     if (
       element.image &&
       element.image.placeholder &&
-      name == element.image.placeholder.type
+      name === element.image.placeholder.type
     ) {
       placeholders.push(element);
     }
@@ -175,6 +175,7 @@ export function getElementSizePT(element: SlidesV1.Schema$PageElement) {
  * @param kee - representing the needle to search
  * @returns any - returns the value by the key if found
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const findByKey = (obj: any, kee: string): any | undefined => {
   if (kee in obj) {
     return obj[kee];

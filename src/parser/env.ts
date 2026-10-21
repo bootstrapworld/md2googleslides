@@ -113,11 +113,11 @@ export class Context {
       return; // Ignore empty text style
     }
     style.end = this.text.rawText.length;
-    if (style.start === style.end || this.text.rawText == '') {
+    if (style.start === style.end || this.text.rawText === '') {
       return; // Ignore empty ranges or ranges containing the empty string
     }
     if (
-      Object.keys(style).filter(k => ['start', 'end'].includes(k)).length == 0
+      Object.keys(style).filter(k => ['start', 'end'].includes(k)).length === 0
     ) {
       return;
     }

@@ -39,10 +39,6 @@ export function get_mathjax_svg(math: string): string {
   return adaptor.innerHTML(node);
 }
 
-function formatFor(expression: string): string {
-  return expression.trim().startsWith('<math>') ? 'MathML' : 'TeX';
-}
-
 function addOrMergeStyles(svg: string, style?: string): string {
   if (!style) {
     return svg;

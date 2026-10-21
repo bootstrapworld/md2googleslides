@@ -546,7 +546,7 @@ fullTokenRules['tr_close'] = (token, context) => {
 
 fullTokenRules['th_open'] = fullTokenRules['td_open'] = (token, context) => {
   const style = applyTokenStyle(token, {
-    bold: token.type == 'th_open', // headers are always bold
+    bold: token.type === 'th_open', // headers are always bold
     // Note: Non-placeholder elements aren't aware of the slide theme.
     // Set the foreground color to match the primary text color of the
     // theme.

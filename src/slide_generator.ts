@@ -17,25 +17,14 @@ import extractSlides from './parser/extract_slides.js';
 import {SlideDefinition, ImageDefinition} from './slides.js';
 import matchLayout from './layout/match_layout.js';
 import {URL} from 'url';
-import {google, Auth, slides_v1 as SlidesV1} from 'googleapis';
+import {google, Auth, drive_v3, slides_v1 as SlidesV1} from 'googleapis';
 import uploadLocalImage, {UPLOAD_FOLDER_ID} from './images/upload.js';
 import probeImage from './images/probe.js';
 import maybeGenerateImage from './images/generate.js';
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
-import fs from 'fs';
-import path from 'path';
 import cliProgress from 'cli-progress';
-
-const USER_HOME =
-  process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE || '';
-
-const STORED_API_KEY_PATH = path.join(
-  USER_HOME,
-  '.md2googleslides',
-  'credentials.json',
-);
 
 // wait a given number of milliseconds
 async function sleep(ms: number) {
@@ -66,7 +55,7 @@ export default class SlideGenerator {
   private slides: SlideDefinition[] = [];
   private api: SlidesV1.Slides;
   private presentation: SlidesV1.Schema$Presentation;
-  private drive: any;
+  private drive!: drive_v3.Drive;
   /**
    * @param {Object} api Authorized API client instance
    * @param {Object} presentation Initial presentation data
@@ -97,6 +86,8 @@ export default class SlideGenerator {
   public static async newPresentation(
     oauth2Client: Auth.OAuth2Client,
     title: string,
+    // TODO: parentId is accepted but not yet used when creating a new presentation
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     parentId: string = '',
   ): Promise<SlideGenerator> {
     const api = google.slides({version: 'v1', auth: oauth2Client});
@@ -232,7 +223,7 @@ export default class SlideGenerator {
       // make sure to avoid going over MAX_IMAGES_PER_SEC requests/sec
       for (const [i, image] of images.entries()) {
         bar.increment();
-        if (i % MAX_IMAGES_PER_SEC == 0) {
+        if (i % MAX_IMAGES_PER_SEC === 0) {
           await sleep(250);
         }
         promises.push(fn(image));
@@ -393,7 +384,7 @@ export default class SlideGenerator {
       hideCursor: false,
     });
     bar.start(requestChunks.length, 0);
-    for await (const [i, chunk] of requestChunks.entries()) {
+    for (const chunk of requestChunks) {
       bar.increment();
       batch.requests = chunk;
       const response = await this.api.presentations.batchUpdate({
@@ -411,10 +402,10 @@ export default class SlideGenerator {
       q: `'${UPLOAD_FOLDER_ID}' in parents and trashed = false`,
       fields: 'files(id)',
     });
-    const files: Array<{id: string}> = res.data.files || [];
-    await Promise.all(
-      files.map(file => this.drive.files.delete({fileId: file.id})),
-    );
+    const fileIds = (res.data.files || [])
+      .map(file => file.id)
+      .filter((id): id is string => !!id);
+    await Promise.all(fileIds.map(fileId => this.drive.files.delete({fileId})));
   }
 
   /**

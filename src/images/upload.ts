@@ -14,8 +14,7 @@
 
 import Debug from 'debug';
 import fs from 'fs';
-import * as path from 'path';
-import {blob} from 'node:stream/consumers';
+import {drive_v3} from 'googleapis';
 
 const debug = Debug('md2gslides');
 
@@ -29,7 +28,10 @@ export const UPLOAD_FOLDER_ID = '1kfhzbGk2HPD2xkIphI1x1-ObwCzQWSCx';
  * @param {string} filePath -- Local path to image to upload
  * @returns {Promise<string>} URL to hosted image
  */
-async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
+async function uploadLocalImage(
+  filePath: string,
+  drive: drive_v3.Drive,
+): Promise<string> {
   debug('Registering file %s', filePath);
   const stream = fs.createReadStream(filePath);
   const filename = filePath.split('/').pop();
@@ -42,18 +44,21 @@ async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
     const media = {body: stream};
 
     const response = await drive.files.create({
-      resource: fileMetadata,
+      requestBody: fileMetadata,
       media: media,
       fields: 'id', // Get the file ID after upload
     });
 
     // If the upload is successful, get the fileId
     const fileId = response.data.id;
+    if (!fileId) {
+      throw new Error(`Upload of ${filePath} did not return a file ID`);
+    }
 
     // Set the file at that ID to be world-readable
     await drive.permissions.create({
       fileId: fileId,
-      resource: {
+      requestBody: {
         type: 'anyone',
         role: 'reader',
       },

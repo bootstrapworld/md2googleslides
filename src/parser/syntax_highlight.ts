@@ -17,8 +17,6 @@
 import {createLowlight, common} from 'lowlight';
 import scheme from 'highlight.js/lib/languages/scheme';
 import pyret from 'highlightjs-bootstrap/src/pyret.js';
-import python from 'highlight.js/lib/languages/python';
-import javascript from 'highlight.js/lib/languages/javascript';
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
 import {StyleDefinition} from '../slides.js';
@@ -31,7 +29,6 @@ interface Rules {
 const hastRules: Rules = {};
 
 // Type guard
-
 function isTextNode(node: lowlight.HastNode): node is lowlight.AST.Text {
   return node.type === 'text';
 }

@@ -251,7 +251,7 @@ export default class GenericLayout {
     ancestors?: SlidesV1.Schema$PageElement[],
   ): void {
     // make sure there's text to insert
-    if (text.rawText.trimLeft().length == 0) {
+    if (text.rawText.trimLeft().length === 0) {
       return; // empty requests are invalid, so don't bother
     }
 
@@ -374,19 +374,17 @@ export default class GenericLayout {
     placeholders: SlidesV1.Schema$PageElement[],
     requests: SlidesV1.Schema$Request[],
   ): void {
-    const that = this;
-
     // Convert pixels to EMUs. If there's a placeholder, resize to fit.
-    function transformImageSize(
+    const transformImageSize = (
       image: ImageDefinition,
       placeholder: SlidesV1.Schema$PageElement,
-    ): void {
+    ): void => {
       // TODO - Fix weird cast
       const layer = (Layout as (s: string) => Layout.PackingSmith)(
         'left-right',
       ); // TODO - Configurable?
 
-      debug('Slide #%d: adding inline image %s', that.slide.index, image.url);
+      debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
       layer.addItem({
         width: image.width + image.padding * 2,
         height: image.height + image.padding * 2,
@@ -395,14 +393,14 @@ export default class GenericLayout {
 
       // bounding box of the entire slide
       const {width: slideWidth, height: slideHeight} =
-        that.presentation.pageSize!;
+        this.presentation.pageSize!;
 
       // if there's a placeholder, use it as a bounding box
       // otherwise: if the image is smaller than 50% of the slide
       // use actual size. Otherwise
       let box;
       if (placeholder) {
-        box = that.getBodyBoundingBox(placeholder);
+        box = this.getBodyBoundingBox(placeholder);
       } else {
         const maxWidth = slideWidth!.magnitude! * 0.5;
         const maxHeight = slideHeight!.magnitude! * 0.5;
@@ -456,7 +454,7 @@ export default class GenericLayout {
         createImage: {
           objectId: imageId,
           elementProperties: {
-            pageObjectId: that.slide.objectId,
+            pageObjectId: this.slide.objectId,
             size: {
               height: {magnitude: height, unit: 'EMU'},
               width: {magnitude: width, unit: 'EMU'},
@@ -485,7 +483,7 @@ export default class GenericLayout {
         },
       };
       requests.push(altTextReq);
-    }
+    };
 
     images.forEach((image, i) => {
       debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
@@ -570,7 +568,7 @@ export default class GenericLayout {
     // check to see if the first cell of the first row asks us to delete
     // necessary to handle racket workaround for the markdown limitation
     // that all tables have headers
-    if (table.cells[0][0].rawText == 'DELETE THIS ROW') {
+    if (table.cells[0][0].rawText === 'DELETE THIS ROW') {
       hasHeader = false;
     }
     // If it's a table with no header...

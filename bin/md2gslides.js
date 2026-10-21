@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-
 import fs from 'fs';
 import path from 'path';
 import {ArgumentParser} from 'argparse';
@@ -221,7 +219,7 @@ function loadCss(theme) {
       theme + '.css',
     );
     css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
-  } catch (e) {
+  } catch {
     try {
       cssPath = path.join(theme);
       css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});

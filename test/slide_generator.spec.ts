@@ -18,7 +18,7 @@ import jsonfile from 'jsonfile';
 import nock from 'nock';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {google, Auth} from 'googleapis';
+import {Auth} from 'googleapis';
 import SlideGenerator from '../src/slide_generator';
 
 const expect = chai.expect;

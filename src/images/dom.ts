@@ -3,8 +3,6 @@ import tmp from 'tmp-promise';
 import {ImageDefinition} from '../slides.js';
 import puppeteer from 'puppeteer';
 
-import Debug from 'debug';
-const debug = Debug('md2gslides');
 tmp.setGracefulCleanup();
 
 // given a dom string and one or more Urls, render the DOM

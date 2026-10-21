@@ -50,7 +50,6 @@ describe('extractSlides', () => {
 
   describe('with an empty slide', () => {
     const markdown = '---\n' + '\n';
-    ('---\n');
     const slides = extractSlides(markdown);
 
     it('should return a slide', () => {

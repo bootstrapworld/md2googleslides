@@ -24,7 +24,10 @@ import {Color, StyleDefinition} from '../slides';
 import camelCase from 'just-camel-case';
 
 // replacement for lodash._mapKeys
-const mapKeys = (obj: object, mapper: any) =>
+const mapKeys = (
+  obj: object,
+  mapper: (value: unknown, key: string) => string,
+) =>
   Object.entries(obj).reduce(
     (acc, [key, value]) => ({
       ...acc,
@@ -58,7 +61,7 @@ function parseColorString(hexString: string): Color | undefined {
 }
 
 function normalizeKeys(css: CssRule): CssRule {
-  return mapKeys(css, (value: any, key: any) => camelCase(key));
+  return mapKeys(css, (_value, key) => camelCase(key));
 }
 
 export function parseStyleSheet(stylesheet: string | undefined): Stylesheet {
