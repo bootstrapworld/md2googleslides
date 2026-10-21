@@ -50,7 +50,7 @@ async function probeUrl(url: string): Promise<ImageSize> {
 async function probeFile(path: string): Promise<ImageSize> {
   const stream = fs.createReadStream(path);
   try {
-    return await probeImageSize(stream);
+    return await probeImageSize(stream as unknown as NodeJS.ReadableStream);
   } finally {
     stream.destroy();
   }
