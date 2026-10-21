@@ -12,4 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module.exports = require('./lib/slide_generator');
+export {default} from './lib/slide_generator.js';
