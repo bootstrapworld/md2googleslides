@@ -6,10 +6,11 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "strict": true,
-    "module": "es2020",
+    "module": "esnext",
     "lib": ["ES2022"],
     "noEmit": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "types": ["node", "mocha"],
     "skipLibCheck": true
   },
   "include": [
