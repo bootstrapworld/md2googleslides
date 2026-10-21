@@ -25,7 +25,9 @@ import {v1 as uuid} from 'uuid';
 import {isDeepStrictEqual} from 'util';
 import {Stylesheet} from './css.js';
 import assert from 'assert';
-import {Element} from 'parse5';
+import type {DefaultTreeAdapterMap} from 'parse5';
+
+type Element = DefaultTreeAdapterMap['element'];
 
 export class Context {
   public slides: SlideDefinition[] = [];

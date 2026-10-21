@@ -14,7 +14,8 @@
 
 import Debug from 'debug';
 import type {Token} from 'markdown-it';
-import parse5, {Element} from 'parse5';
+import {parseFragment} from 'parse5';
+import type {DefaultTreeAdapterMap} from 'parse5';
 import fileUrl from 'file-url';
 import {SlideDefinition, StyleDefinition} from '../slides.js';
 import parseMarkdown from './parser.js';
@@ -28,6 +29,8 @@ import {
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
+
+type Element = DefaultTreeAdapterMap['element'];
 
 type MarkdownRuleFn = (token: Token, context: Context) => void;
 interface MarkdownRules {
@@ -122,8 +125,8 @@ inlineTokenRules['inline'] = (token, context) => {
 
 inlineTokenRules['html_inline'] = (token, context) => {
   const fragment = context.inlineHtmlContext
-    ? parse5.parseFragment(context.inlineHtmlContext, token.content)
-    : parse5.parseFragment(token.content);
+    ? parseFragment(context.inlineHtmlContext, token.content, {})
+    : parseFragment(token.content);
   if (fragment.childNodes && fragment.childNodes.length) {
     const node = fragment.childNodes[0] as Element;
     const style: StyleDefinition = {};
