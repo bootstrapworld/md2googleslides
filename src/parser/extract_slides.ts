@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Debug from 'debug';
-import Token from 'markdown-it/lib/token';
+import type {Token} from 'markdown-it';
 import parse5, {Element} from 'parse5';
 import fileUrl from 'file-url';
 import {SlideDefinition, StyleDefinition} from '../slides.js';
@@ -52,7 +52,7 @@ function attr(token: Token, name: string): string | undefined {
   if (!attr) {
     return undefined;
   }
-  return attr[1];
+  return String(attr[1]);
 }
 
 function hasClass(token: Token, cls: string): boolean {
@@ -95,7 +95,7 @@ function applyTokenStyle(
     return style;
   }
 
-  const css = parseInlineStyle(styleAttr[1]);
+  const css = parseInlineStyle(String(styleAttr[1]));
   updateStyleDefinition(css, style);
   return style;
 }
