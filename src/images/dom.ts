@@ -1,18 +1,17 @@
 import sharp from 'sharp';
 import tmp from 'tmp-promise';
 import {ImageDefinition} from '../slides.js';
-import puppeteer from "puppeteer";
+import puppeteer from 'puppeteer';
 
 import Debug from 'debug';
 const debug = Debug('md2gslides');
 tmp.setGracefulCleanup();
 
-
 // given a dom string and one or more Urls, render the DOM
 // to a page and then generate an image of it.
 async function renderDOM(image: ImageDefinition) {
-  if(!image.source) {
-    throw "Error: detected an html fence with no html inside"
+  if (!image.source) {
+    throw 'Error: detected an html fence with no html inside';
   }
 
   const html = `
@@ -30,22 +29,28 @@ async function renderDOM(image: ImageDefinition) {
   await page.setContent(html);
 
   // set deviceScaleFactor for higher-res images
-  await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 5 });
+  await page.setViewport({width: 1920, height: 1080, deviceScaleFactor: 5});
 
   // grab the content and make an image from it
-  const content = await page.$("#DOMtoImage");
-  if(!content) { throw "Error: no node found with id `DOMtoImage`"; }
+  const content = await page.$('#DOMtoImage');
+  if (!content) {
+    throw 'Error: no node found with id `DOMtoImage`';
+  }
   const boundingBox = await content.boundingBox();
   image.width = boundingBox!.width;
-  image.height= boundingBox!.height;
-  const imageBuffer = await content.screenshot({ omitBackground: true });
+  image.height = boundingBox!.height;
+  const imageBuffer = await content.screenshot({omitBackground: true});
 
   // close the page and browser
   await page.close();
   await browser.close();
 
   const path = await tmp.tmpName({postfix: '.png'});
-  await sharp(imageBuffer).withMetadata({density: 2400}).resize({width: 1250}).png().toFile(path);
+  await sharp(imageBuffer)
+    .withMetadata({density: 2400})
+    .resize({width: 1250})
+    .png()
+    .toFile(path);
   return path;
 }
 

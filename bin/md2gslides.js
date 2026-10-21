@@ -14,16 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable no-console, @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-var-requires */
 
-import fs   from 'fs';
+import fs from 'fs';
 import path from 'path';
-import { ArgumentParser } from 'argparse';
+import {ArgumentParser} from 'argparse';
 import UserAuthorizer from '../lib/auth.js';
 import SlideGenerator from '../lib/slide_generator.js';
-import opener  from 'opener';
+import opener from 'opener';
 import readline from 'readline';
-import { createRequire } from 'module';
+import {createRequire} from 'module';
 const require = createRequire(import.meta.url);
 const SCOPES = [
   'https://www.googleapis.com/auth/presentations',
@@ -35,12 +35,12 @@ const USER_HOME =
 const STORED_CREDENTIALS_PATH = path.join(
   USER_HOME,
   '.md2googleslides',
-  'credentials.json'
+  'credentials.json',
 );
 const STORED_CLIENT_ID_PATH = path.join(
   USER_HOME,
   '.md2googleslides',
-  'client_id.json'
+  'client_id.json',
 );
 
 const parser = new ArgumentParser({
@@ -104,20 +104,23 @@ parser.add_argument('-c', '--copy', {
 const args = parser.parse_args();
 
 function handleError(err) {
-  if(err && err.errors && err.errors[0] && err.errors[0].message) {
+  if (err && err.errors && err.errors[0] && err.errors[0].message) {
     let errorString = '❌ Unable to generate slides:\n';
     errorString += err.errors[0].message + '\n';
     const reqMatch = err.errors[0].message.match(/requests\[([0-9]+)\]/);
     // if there's a specific request that went bad, print it
-    if(reqMatch && err?.config?.data?.requests) {
-      errorString += 'The request that failed was:\n'
-      errorString += JSON.stringify(err.config.data.requests[reqMatch[1]], null, 2);
+    if (reqMatch && err?.config?.data?.requests) {
+      errorString += 'The request that failed was:\n';
+      errorString += JSON.stringify(
+        err.config.data.requests[reqMatch[1]],
+        null,
+        2,
+      );
     }
-    console.error(errorString);  
+    console.error(errorString);
   } else {
     throw err;
   }
-  
 }
 
 function prompt(url) {
@@ -186,10 +189,15 @@ function buildSlideGenerator(oauth2Client) {
   if (presentationId) {
     return SlideGenerator.forPresentation(oauth2Client, presentationId);
   } else if (copyId) {
-    return SlideGenerator.copyPresentation(oauth2Client, title, copyId, parentId);
+    return SlideGenerator.copyPresentation(
+      oauth2Client,
+      title,
+      copyId,
+      parentId,
+    );
   } else {
     return SlideGenerator.newPresentation(oauth2Client, title, parentId);
-  }    
+  }
 }
 
 function eraseIfNeeded(slideGenerator) {
@@ -210,19 +218,23 @@ function loadCss(theme) {
       '..',
       '..',
       'styles',
-      theme + '.css'
+      theme + '.css',
     );
-    css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});  
-  } catch(e) {
+    css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
+  } catch (e) {
     try {
       cssPath = path.join(theme);
       css = fs.readFileSync(cssPath, {encoding: 'UTF-8'});
-    } catch(e) {
-      console.log(e)
-      throw "Could not load the theme '" + theme + "'. It is not known to highlight.js, or a valid file path" 
+    } catch (e) {
+      console.log(e);
+      throw (
+        "Could not load the theme '" +
+        theme +
+        "'. It is not known to highlight.js, or a valid file path"
+      );
     }
   }
-  
+
   return css;
 }
 
@@ -241,7 +253,8 @@ function generateSlides(slideGenerator) {
   const input = fs.readFileSync(source, {encoding: 'UTF-8'});
   const css = loadCss(args.style);
 
-  return slideGenerator.generateFromMarkdown(input, { css: css })
+  return slideGenerator
+    .generateFromMarkdown(input, {css: css})
     .then(id => slideGenerator.clearUploadFolder().then(() => id));
 }
 

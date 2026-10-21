@@ -14,31 +14,29 @@
 
 import Debug from 'debug';
 
-import { mathjax } from 'mathjax-full/js/mathjax.js'
-import { TeX } from 'mathjax-full/js/input/tex.js'
-import { SVG } from 'mathjax-full/js/output/svg.js'
-import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
-import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
-import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
+import {mathjax} from 'mathjax-full/js/mathjax.js';
+import {TeX} from 'mathjax-full/js/input/tex.js';
+import {SVG} from 'mathjax-full/js/output/svg.js';
+import {AllPackages} from 'mathjax-full/js/input/tex/AllPackages.js';
+import {liteAdaptor} from 'mathjax-full/js/adaptors/liteAdaptor.js';
+import {RegisterHTMLHandler} from 'mathjax-full/js/handlers/html.js';
 import renderSVG from './svg.js';
 import {ImageDefinition} from '../slides.js';
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
 
-
-const adaptor = liteAdaptor()
-RegisterHTMLHandler(adaptor)
+const adaptor = liteAdaptor();
+RegisterHTMLHandler(adaptor);
 
 const mathjax_document = mathjax.document('', {
-  InputJax: new TeX({ packages: AllPackages }),
-  OutputJax: new SVG({ fontCache: 'local' })
-})
-
+  InputJax: new TeX({packages: AllPackages}),
+  OutputJax: new SVG({fontCache: 'local'}),
+});
 
 export function get_mathjax_svg(math: string): string {
-  const node = mathjax_document.convert(math)
-  return adaptor.innerHTML(node)
+  const node = mathjax_document.convert(math);
+  return adaptor.innerHTML(node);
 }
 
 function formatFor(expression: string): string {

@@ -21,10 +21,10 @@ import assert from 'assert';
 
 const debug = Debug('md2gslides');
 
-const renderers: {[key: string]: (img: ImageDefinition) => Promise<String>} = {
+const renderers: {[key: string]: (img: ImageDefinition) => Promise<string>} = {
   svg: renderSVG,
   math: renderMathJax,
-  html: renderDOM
+  html: renderDOM,
 };
 
 /**
@@ -33,7 +33,7 @@ const renderers: {[key: string]: (img: ImageDefinition) => Promise<String>} = {
  * @return {Promise<Image>} Promise resolved with image URL
  */
 async function maybeGenerateImage(
-  image: ImageDefinition
+  image: ImageDefinition,
 ): Promise<ImageDefinition> {
   if (image.url) {
     debug('Image already rasterized: %s', image.url);

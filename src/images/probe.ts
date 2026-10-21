@@ -37,7 +37,7 @@ async function probeUrl(url: string): Promise<ImageSize> {
   return await retry(async doRetry => {
     try {
       return await probeImageSize(url);
-    } catch (err:any) {
+    } catch (err: any) {
       if (retriableCodes.includes(err.code) || err.status >= 500) {
         doRetry(err);
       }
@@ -60,7 +60,7 @@ async function probeImage(image: ImageDefinition): Promise<ImageDefinition> {
   assert(image.url);
   const parsedUrl = new URL(image.url);
   let size;
-  if(parsedUrl.protocol === 'file:'){
+  if (parsedUrl.protocol === 'file:') {
     size = await probeFile(parsedUrl.pathname);
   } else {
     size = await probeUrl(image.url);
@@ -70,10 +70,10 @@ async function probeImage(image: ImageDefinition): Promise<ImageDefinition> {
 
   // if there's a custom height/width, we need to scale. Otherwise use 1.
   let scaleRatio;
-  scaleRatio = image.height? (image.height  / size.height) : 1;
-  scaleRatio = image.width?  (image.width   / size.width ) : 1;
-  
-  image.width  = size.width  * scaleRatio;
+  scaleRatio = image.height ? image.height / size.height : 1;
+  scaleRatio = image.width ? image.width / size.width : 1;
+
+  image.width = size.width * scaleRatio;
   image.height = size.height * scaleRatio;
   //console.log('after probe, image:', JSON.stringify(image, null, 4))
   return image;

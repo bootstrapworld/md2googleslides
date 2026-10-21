@@ -27,13 +27,13 @@ const layouts: Layout[] = [];
 
 export default function matchLayout(
   presentation: SlidesV1.Schema$Presentation,
-  slide: SlideDefinition
+  slide: SlideDefinition,
 ): GenericLayout {
   // if we have manually set the slide layout get the master from the presentation
   let layoutName: string | undefined = undefined;
   if (slide.customLayout !== undefined) {
     const layout = presentation.layouts?.find(
-      layout => layout.layoutProperties?.displayName === slide.customLayout
+      layout => layout.layoutProperties?.displayName === slide.customLayout,
     );
     if (layout?.layoutProperties?.name) {
       layoutName = layout.layoutProperties.name;
@@ -79,29 +79,30 @@ function hasContent(slide?: SlideDefinition): boolean {
 
 defineLayout(
   'TITLE',
-  slide => hasText(slide.title) && hasText(slide.subtitle) && !hasContent(slide)
+  slide =>
+    hasText(slide.title) && hasText(slide.subtitle) && !hasContent(slide),
 );
 defineLayout('MAIN_POINT', slide => hasBigTitle(slide) && !hasContent(slide));
 defineLayout(
   'SECTION_HEADER',
   slide =>
-    hasText(slide.title) && !hasText(slide.subtitle) && !hasContent(slide)
+    hasText(slide.title) && !hasText(slide.subtitle) && !hasContent(slide),
 );
 defineLayout(
   'TITLE_AND_TWO_COLUMNS',
-  slide => hasText(slide.title) && slide.bodies.length === 2
+  slide => hasText(slide.title) && slide.bodies.length === 2,
 );
 defineLayout(
   'SECTION_TITLE_AND_DESCRIPTION',
   slide =>
-    hasText(slide.title) && hasText(slide.subtitle) && hasTextContent(slide)
+    hasText(slide.title) && hasText(slide.subtitle) && hasTextContent(slide),
 );
 defineLayout(
   'BIG_NUMBER',
-  slide => hasBigTitle(slide) && hasTextContent(slide)
+  slide => hasBigTitle(slide) && hasTextContent(slide),
 );
 defineLayout(
   'TITLE_AND_BODY',
-  slide => hasText(slide.title) || slide.bodies.length !== 0
+  slide => hasText(slide.title) || slide.bodies.length !== 0,
 );
 defineLayout('BLANK', () => true);

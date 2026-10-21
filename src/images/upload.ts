@@ -15,7 +15,7 @@
 import Debug from 'debug';
 import fs from 'fs';
 import * as path from 'path';
-import { blob } from 'node:stream/consumers';
+import {blob} from 'node:stream/consumers';
 
 const debug = Debug('md2gslides');
 
@@ -37,14 +37,14 @@ async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
   try {
     const fileMetadata = {
       name: filename,
-      parents: [UPLOAD_FOLDER_ID]
+      parents: [UPLOAD_FOLDER_ID],
     };
-    const media = { body: stream };
+    const media = {body: stream};
 
     const response = await drive.files.create({
       resource: fileMetadata,
       media: media,
-      fields: 'id' // Get the file ID after upload
+      fields: 'id', // Get the file ID after upload
     });
 
     // If the upload is successful, get the fileId
@@ -54,14 +54,13 @@ async function uploadLocalImage(filePath: string, drive: any): Promise<string> {
     await drive.permissions.create({
       fileId: fileId,
       resource: {
-        'type': 'anyone',
-        'role': 'reader'
-      }
+        type: 'anyone',
+        role: 'reader',
+      },
     });
 
     // return the URL to the newly-uploaded, world-readable file
-    return `https://drive.usercontent.google.com/uc?id=${fileId}&authuser=0&export=download`
-
+    return `https://drive.usercontent.google.com/uc?id=${fileId}&authuser=0&export=download`;
   } catch (e) {
     console.error('Error uploading file:', e);
     throw e;

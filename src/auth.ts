@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { google, Auth } from 'googleapis';
+import {google, Auth} from 'googleapis';
 import path from 'path';
-import { mkdirp } from 'mkdirp';
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-import { Memory } from 'lowdb';
+import {mkdirp} from 'mkdirp';
+import {Low} from 'lowdb';
+import {JSONFile} from 'lowdb/node';
+import {Memory} from 'lowdb';
 
 const debug = Debug('md2gslides');
 
@@ -50,7 +50,7 @@ export default class UserAuthorizer {
 
   public async getUserCredentials(
     user: string,
-    scopes: string
+    scopes: string,
   ): Promise<Auth.OAuth2Client> {
     // 1. Read from disk/memory
     await this.db.read();
@@ -59,7 +59,7 @@ export default class UserAuthorizer {
     const oauth2Client = new google.auth.OAuth2(
       this.clientId,
       this.clientSecret,
-      this.redirectUrl
+      this.redirectUrl,
     );
 
     oauth2Client.on('tokens', async (tokens: Auth.Credentials) => {

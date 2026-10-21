@@ -25,7 +25,11 @@ async function renderSVG(image: ImageDefinition): Promise<string> {
   assert(image.source);
   const path = await tmp.tmpName({postfix: '.png'});
   const buffer = Buffer.from(image.source);
-  await sharp(buffer).withMetadata({density: 2400}).resize({width: 1250}).png().toFile(path);
+  await sharp(buffer)
+    .withMetadata({density: 2400})
+    .resize({width: 1250})
+    .png()
+    .toFile(path);
   return path;
 }
 

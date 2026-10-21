@@ -32,14 +32,14 @@ describe('extractSlides', () => {
       console.log(slides);
       return expect(slides).to.have.nested.property(
         '[0].title.rawText',
-        'Title'
+        'Title',
       );
     });
 
     it('should have a subtitle', () => {
       return expect(slides).to.have.nested.property(
         '[0].subtitle.rawText',
-        'Subtitle'
+        'Subtitle',
       );
     });
 
@@ -71,7 +71,7 @@ describe('extractSlides', () => {
     it('should have a title', () => {
       return expect(slides).to.have.nested.property(
         '[0].title.rawText',
-        'Title'
+        'Title',
       );
     });
 
@@ -82,7 +82,7 @@ describe('extractSlides', () => {
     it('should have body text', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.rawText',
-        'hello world\n'
+        'hello world\n',
       );
     });
   });
@@ -95,7 +95,7 @@ describe('extractSlides', () => {
     it('should have a title', () => {
       return expect(slides).to.have.nested.property(
         '[0].title.rawText',
-        'Title'
+        'Title',
       );
     });
 
@@ -106,14 +106,14 @@ describe('extractSlides', () => {
     it('should have 1st column text', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.rawText',
-        'hello\n'
+        'hello\n',
       );
     });
 
     it('should have 2nd column text', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[1].text.rawText',
-        'world\n'
+        'world\n',
       );
     });
   });
@@ -128,7 +128,7 @@ describe('extractSlides', () => {
     it('should have a background image', () => {
       return expect(slides).to.have.nested.property(
         '[0].backgroundImage.url',
-        'https://example.com/image.jpg'
+        'https://example.com/image.jpg',
       );
     });
   });
@@ -144,21 +144,21 @@ describe('extractSlides', () => {
     it('should have a background image', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].images[0].url',
-        'https://example.com/image.jpg'
+        'https://example.com/image.jpg',
       );
     });
 
     it('should have an image x offset', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].images[0].offsetX',
-        100
+        100,
       );
     });
 
     it('should have an image y offset', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].images[0].offsetY',
-        200
+        200,
       );
     });
   });
@@ -171,7 +171,7 @@ describe('extractSlides', () => {
     it('should have a video', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].videos[0].id',
-        '12345'
+        '12345',
       );
     });
   });
@@ -220,21 +220,21 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].start',
-        0
+        0,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].end',
-        14
+        14,
       );
     });
 
     it('should have the correct tyoe', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].type',
-        'unordered'
+        'unordered',
       );
     });
   });
@@ -253,21 +253,21 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].start',
-        0
+        0,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].end',
-        14
+        14,
       );
     });
 
     it('should have the correct type', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.listMarkers[0].type',
-        'ordered'
+        'ordered',
       );
     });
   });
@@ -286,63 +286,63 @@ describe('extractSlides', () => {
     it('should have the correct italic start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].start',
-        0
+        0,
       );
     });
 
     it('should have the correct italic end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].end',
-        6
+        6,
       );
     });
 
     it('should have the correct italic style', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].italic',
-        true
+        true,
       );
     });
 
     it('should have the correct bold start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[2].start',
-        8
+        8,
       );
     });
 
     it('should have the correct bold end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[2].end',
-        12
+        12,
       );
     });
 
     it('should have the correct bold style', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[2].bold',
-        true
+        true,
       );
     });
 
     it('should have the correct strikethrough start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[4].start',
-        14
+        14,
       );
     });
 
     it('should have the correct strikethrough end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[4].end',
-        27
+        27,
       );
     });
 
     it('should have the correct strikethrough style', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[4].strikethrough',
-        true
+        true,
       );
     });
   });
@@ -355,7 +355,7 @@ describe('extractSlides', () => {
     it('should have emoji', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.rawText',
-        '❤️\n'
+        '❤️\n',
       );
     });
   });
@@ -374,26 +374,26 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].start',
-        0
+        0,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].end',
-        5
+        5,
       );
     });
 
     it('should have the color style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].foregroundColor'
+        '[0].bodies[0].text.textRuns[0].foregroundColor',
       );
     });
 
     it('should have the font size style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].fontSize'
+        '[0].bodies[0].text.textRuns[0].fontSize',
       );
     });
   });
@@ -413,26 +413,26 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].start',
-        0
+        0,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[0].end',
-        5
+        5,
       );
     });
 
     it('should have the color style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].foregroundColor'
+        '[0].bodies[0].text.textRuns[0].foregroundColor',
       );
     });
 
     it('should have the font size style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].fontSize'
+        '[0].bodies[0].text.textRuns[0].fontSize',
       );
     });
   });
@@ -451,21 +451,21 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].start',
-        1
+        1,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].end',
-        2
+        2,
       );
     });
 
     it('should have the correct style', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].baselineOffset',
-        'SUBSCRIPT'
+        'SUBSCRIPT',
       );
     });
   });
@@ -484,21 +484,21 @@ describe('extractSlides', () => {
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].start',
-        5
+        5,
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].end',
-        6
+        6,
       );
     });
 
     it('should have the correct style', () => {
       return expect(slides).to.have.nested.property(
         '[0].bodies[0].text.textRuns[1].baselineOffset',
-        'SUPERSCRIPT'
+        'SUPERSCRIPT',
       );
     });
   });
@@ -517,7 +517,7 @@ describe('extractSlides', () => {
     it('should have speaker notes', () => {
       return expect(slides).to.have.nested.property(
         '[0].notes.rawText',
-        'Hello world\none\ntwo\n'
+        'Hello world\none\ntwo\n',
       );
     });
 
@@ -541,7 +541,7 @@ describe('extractSlides', () => {
     it('should have a customLayout', () => {
       return expect(slides).to.have.nested.property(
         '[0].customLayout',
-        'my custom layout'
+        'my custom layout',
       );
     });
   });

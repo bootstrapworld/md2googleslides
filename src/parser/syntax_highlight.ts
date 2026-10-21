@@ -14,11 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {createLowlight, common} from 'lowlight'
-import scheme from 'highlight.js/lib/languages/scheme'
-import pyret from 'highlightjs-bootstrap/src/pyret.js'
-import python from 'highlight.js/lib/languages/python'
-import javascript from 'highlight.js/lib/languages/javascript'
+import {createLowlight, common} from 'lowlight';
+import scheme from 'highlight.js/lib/languages/scheme';
+import pyret from 'highlightjs-bootstrap/src/pyret.js';
+import python from 'highlight.js/lib/languages/python';
+import javascript from 'highlight.js/lib/languages/javascript';
 import {Context} from './env.js';
 import {CssRule, updateStyleDefinition} from './css.js';
 import {StyleDefinition} from '../slides.js';
@@ -31,7 +31,7 @@ interface Rules {
 const hastRules: Rules = {};
 
 // Type guard
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function isTextNode(node: lowlight.HastNode): node is lowlight.AST.Text {
   return node.type === 'text';
 }
@@ -62,7 +62,7 @@ function processHastNode(node: lowlight.HastNode, context: Context): void {
 
 function extractStyle(
   node: lowlight.HastNode,
-  cssRules: {[key: string]: CssRule}
+  cssRules: {[key: string]: CssRule},
 ): StyleDefinition {
   let style = {};
   if (!isElementNode(node)) {
@@ -94,7 +94,7 @@ hastRules['span'] = (node, context) => {
 function highlightSyntax(
   content: string,
   language: string | undefined,
-  context: Context
+  context: Context,
 ): void {
   const lowlight = createLowlight(common);
   lowlight.register({scheme});
@@ -102,14 +102,14 @@ function highlightSyntax(
 
   // if a language is provided, use that. Otherwise guess
   let highlightResult;
-  if(language) { 
-    highlightResult = lowlight.highlight(language, content); 
+  if (language) {
+    highlightResult = lowlight.highlight(language, content);
   } else {
     highlightResult = lowlight.highlightAuto(content);
   }
   // if guessing didn't work, default to Pyret
   if (!highlightResult.language) {
-    highlightResult = lowlight.highlight("pyret", content);
+    highlightResult = lowlight.highlight('pyret', content);
   }
   for (const node of highlightResult.children) {
     processHastNode(node, context);

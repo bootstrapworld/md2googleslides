@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import {slides_v1 as SlidesV1} from 'googleapis';
-import { createCanvas } from 'canvas';
+import {createCanvas} from 'canvas';
 import assert from 'assert';
-import { TextDefinition } from '../slides.js'
+import {TextDefinition} from '../slides.js';
 
 export interface Dimensions {
   width: number;
@@ -31,7 +31,7 @@ export interface Dimensions {
  */
 export function findPage(
   presentation: SlidesV1.Schema$Presentation,
-  pageId: string
+  pageId: string,
 ): SlidesV1.Schema$Page | undefined {
   if (!presentation.slides) {
     return undefined;
@@ -40,7 +40,7 @@ export function findPage(
 }
 
 export function pageSize(
-  presentation: SlidesV1.Schema$Presentation
+  presentation: SlidesV1.Schema$Presentation,
 ): Dimensions {
   assert(presentation.pageSize?.width?.magnitude);
   assert(presentation.pageSize?.height?.magnitude);
@@ -59,13 +59,13 @@ export function pageSize(
  */
 export function findLayoutIdByName(
   presentation: SlidesV1.Schema$Presentation,
-  name: string
+  name: string,
 ): string | undefined {
   if (!presentation.layouts) {
     return undefined;
   }
   const layout = presentation.layouts.find(
-    (l): boolean => l.layoutProperties?.name === name
+    (l): boolean => l.layoutProperties?.name === name,
   );
   if (!layout) {
     return undefined;
@@ -84,7 +84,7 @@ export function findLayoutIdByName(
 export function findPlaceholder(
   presentation: SlidesV1.Schema$Presentation,
   pageId: string,
-  name: string
+  name: string,
 ): SlidesV1.Schema$PageElement[] | undefined {
   const page = findPage(presentation, pageId);
   if (!page) {
@@ -106,9 +106,11 @@ export function findPlaceholder(
     ) {
       placeholders.push(element);
     }
-    if (element.image && 
-      element.image.placeholder && 
-      name == element.image.placeholder.type) {
+    if (
+      element.image &&
+      element.image.placeholder &&
+      name == element.image.placeholder.type
+    ) {
       placeholders.push(element);
     }
   }
@@ -122,7 +124,7 @@ export function findPlaceholder(
 
 export function findSpeakerNotesObjectId(
   presentation: SlidesV1.Schema$Presentation,
-  pageId: string
+  pageId: string,
 ): string | undefined {
   const page = findPage(presentation, pageId);
   if (page) {
@@ -134,7 +136,7 @@ export function findSpeakerNotesObjectId(
   return undefined;
 }
 
-// Code below added by Emmanuel Schanzer 
+// Code below added by Emmanuel Schanzer
 // based on code from https://stackoverflow.com/questions/75228506/google-slides-autofit-text-alternative-calculate-based-on-dimensions-of-elem/75278719#75278719
 // - enhanced to use smarter calculation of average chars (use an avg'd sample instead of 'W')
 // - enhanced to use computed style objects (takes into acct indenting, lineSpacing, and more)
@@ -146,19 +148,23 @@ export const convertEMUtoPT = (emu: number): number => emu / 12700;
 export const convertPXtoPT = (px: number): number => px * 0.75;
 // convert PT to PX, there is 0.75pt to a px
 export const convertPTtoPX = (px: number): number => px / 0.75;
-export const convertEMUtoPX = (emu: number): number => convertPTtoPX(convertEMUtoPT(emu));
+export const convertEMUtoPX = (emu: number): number =>
+  convertPTtoPX(convertEMUtoPT(emu));
 
 // this is a very simple example of what i have, obviously you'll need error handling if those values don't exist
 // The below will return the dimensions in EMU, to convert to PT divide the EMU value by `12700`
 export function getElementSizePT(element: SlidesV1.Schema$PageElement) {
-    assert(element);
-    assert(element.size?.height?.magnitude);
-    assert(element.size?.width?.magnitude);
-    assert(element.transform?.scaleX);
-    assert(element.transform?.scaleY);
-    const width = element.size.width.magnitude * element.transform?.scaleX;
-    const height = element?.size?.height?.magnitude * element.transform?.scaleY;
-    return { width: Math.round(convertEMUtoPT(width)), height: Math.round(convertEMUtoPT(height)) };
+  assert(element);
+  assert(element.size?.height?.magnitude);
+  assert(element.size?.width?.magnitude);
+  assert(element.transform?.scaleX);
+  assert(element.transform?.scaleY);
+  const width = element.size.width.magnitude * element.transform?.scaleX;
+  const height = element?.size?.height?.magnitude * element.transform?.scaleY;
+  return {
+    width: Math.round(convertEMUtoPT(width)),
+    height: Math.round(convertEMUtoPT(height)),
+  };
 }
 /**
  * @name findByKey
@@ -173,11 +179,13 @@ export const findByKey = (obj: any, kee: string): any | undefined => {
   if (kee in obj) {
     return obj[kee];
   }
-  for (const n of Object.values(obj).filter(Boolean).filter(v => typeof v === 'object')) {
-      const found = findByKey(n, kee);
-      if (typeof found !== 'undefined') {
-        return found;
-      }
+  for (const n of Object.values(obj)
+    .filter(Boolean)
+    .filter(v => typeof v === 'object')) {
+    const found = findByKey(n, kee);
+    if (typeof found !== 'undefined') {
+      return found;
+    }
   }
 };
 
@@ -195,13 +203,12 @@ export const findByKey = (obj: any, kee: string): any | undefined => {
 export function splitter(str: string, l: number): string[] {
   const strs = [];
   while (str.length > l) {
-      let pos = str.substring(0, l).lastIndexOf(' ');
-      pos = pos <= 0 ? l : pos;
-      strs.push(...str.substring(0, pos).split('\n'));
-      let i = str.indexOf(' ', pos) + 1;
-      if (i < pos || i > pos + l)
-          i = pos;
-      str = str.substring(i);
+    let pos = str.substring(0, l).lastIndexOf(' ');
+    pos = pos <= 0 ? l : pos;
+    strs.push(...str.substring(0, pos).split('\n'));
+    let i = str.indexOf(' ', pos) + 1;
+    if (i < pos || i > pos + l) i = pos;
+    str = str.substring(i);
   }
   strs.push(str);
   return strs;
@@ -215,48 +222,48 @@ const DEFAULT_STYLE = {
   foregroundColor: {},
   bold: false,
   italic: false,
-  fontFamily: "Arial",
-  fontSize: { magnitude: 16, unit: 'PT' },
+  fontFamily: 'Arial',
+  fontSize: {magnitude: 16, unit: 'PT'},
   link: undefined,
   baselineOffset: 0,
   smallCaps: false,
   strikethrough: false,
   underline: false,
-  weightedFontFamily: { fontFamily: "Arial", weight: 400 },
+  weightedFontFamily: {fontFamily: 'Arial', weight: 400},
   lineSpacing: 115, // % of line height (115 = 14pt lines are separated by 14pt*115%)
   alignment: 'START',
-  indentStart: { magnitude: 0, unit: 'PT' },
-  indentEnd:   { magnitude: 0, unit: 'PT' },
-  spaceAbove:  { magnitude: 0, unit: 'PT' },
-  spaceBelow:  { magnitude: 0, unit: 'PT' },
-  indentFirstLine: { magnitude: 0, unit: 'PT' },
+  indentStart: {magnitude: 0, unit: 'PT'},
+  indentEnd: {magnitude: 0, unit: 'PT'},
+  spaceAbove: {magnitude: 0, unit: 'PT'},
+  spaceBelow: {magnitude: 0, unit: 'PT'},
+  indentFirstLine: {magnitude: 0, unit: 'PT'},
   direction: 'LEFT_TO_RIGHT',
-  spacingMode: 'NEVER_COLLAPSE'
-}
+  spacingMode: 'NEVER_COLLAPSE',
+};
 
 const MIN_SIZE = 10; // Anything smaller than 15pt is not readable on a projector
 
-const DEFAULT_PADDING = 0.2 * 72;  // 72pt per inch, assume 0.1in padding on all sizes
+const DEFAULT_PADDING = 0.2 * 72; // 72pt per inch, assume 0.1in padding on all sizes
 
 // in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
 const WTF_CHAR_WIDTH_HACK = 1.15;
 
 // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
 const cachedFontCalculations = new Map();
-  
-export function calculateFontSize(
-  ancestors: SlidesV1.Schema$PageElement[],  // oldest-to-youngest
-  text: TextDefinition,
-  constraints: string): number {
 
+export function calculateFontSize(
+  ancestors: SlidesV1.Schema$PageElement[], // oldest-to-youngest
+  text: TextDefinition,
+  constraints: string,
+): number {
   // the youngest (last) ancestor is the actual element we're trying to fit
-  const element = ancestors[ancestors.length-1];
+  const element = ancestors[ancestors.length - 1];
 
   // check to see if we've already done this work
   // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
   const key = text.rawText + element.objectId;
-  if(cachedFontCalculations.has(key)) { 
-    return cachedFontCalculations.get(key); 
+  if (cachedFontCalculations.has(key)) {
+    return cachedFontCalculations.get(key);
   }
 
   // Create a canvas with the same size as the element. This probably doesn't matter,
@@ -270,28 +277,50 @@ export function calculateFontSize(
 
   // starting with the default, merge style rules from oldest-to-youngest
   const computedStyle = Object.assign(
-    {}, DEFAULT_STYLE,
-    ...ancestors.map(a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style)
+    {},
+    DEFAULT_STYLE,
+    ...ancestors.map(
+      a => a.shape?.text?.textElements?.at(0)?.paragraphMarker?.style,
+    ),
   );
 
   // try to extract all the font-sizes
-  const fontSizes = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude).filter((a): a is number => Number.isInteger(a)) ?? [];
+  const fontSizes =
+    element.shape?.text?.textElements
+      ?.map(textElement => textElement.textRun?.style?.fontSize?.magnitude)
+      .filter((a): a is number => Number.isInteger(a)) ?? [];
   // try to extract all the font-weights
-  const fontWeights = element.shape?.text?.textElements?.map(textElement => textElement.textRun?.style?.weightedFontFamily?.weight).filter((a): a is number => Number.isInteger(a)) ?? [];
+  const fontWeights =
+    element.shape?.text?.textElements
+      ?.map(
+        textElement => textElement.textRun?.style?.weightedFontFamily?.weight,
+      )
+      .filter((a): a is number => Number.isInteger(a)) ?? [];
   // fallback to arial if not found; if there's more than one fontFamily, just pick the first one
-  const fontFamily = findByKey(element, 'fontFamily') ?? computedStyle.fontFamily;
+  const fontFamily =
+    findByKey(element, 'fontFamily') ?? computedStyle.fontFamily;
   // calculate the average as there can be different fonts with different weights within a single text element
-  const averageFontWeight = fontWeights.reduce((a, n) => a + n, 0) / fontWeights.length;
-  const averageFontSize = fontSizes.reduce((a, n) => a + n, 0) / fontSizes.length;
+  const averageFontWeight =
+    fontWeights.reduce((a, n) => a + n, 0) / fontWeights.length;
+  const averageFontSize =
+    fontSizes.reduce((a, n) => a + n, 0) / fontSizes.length;
   // if the average font-weight is not a number, use the default
-  const fontWeight = isNaN(averageFontWeight) ? computedStyle.weightedFontFamily.weight : averageFontWeight;
+  const fontWeight = isNaN(averageFontWeight)
+    ? computedStyle.weightedFontFamily.weight
+    : averageFontWeight;
   // use the average fontSize if available, else start at an arbitrary default
-  let fontSize = isNaN(averageFontSize) ? computedStyle.fontSize.magnitude : averageFontSize;
+  let fontSize = isNaN(averageFontSize)
+    ? computedStyle.fontSize.magnitude
+    : averageFontSize;
   // if the input value is an empty string, don't bother with any calculations
-  if (text.rawText.length === 0) { return fontSize; }
+  if (text.rawText.length === 0) {
+    return fontSize;
+  }
 
   // convenience function: given a property, get its magnitude or produce zero
-  function amountPT(prop: string) { return computedStyle[prop].magnitude || 0; }
+  function amountPT(prop: string) {
+    return computedStyle[prop].magnitude || 0;
+  }
 
   // Pixel-accurate line wrapping using canvas measurements, respecting hard breaks.
   // Replaces the character-count-based splitter(), which was inaccurate for variable-width text.
@@ -320,22 +349,24 @@ export function calculateFontSize(
 
     // WTF_CHAR_WIDTH_HACK shrinks the allowed width to account for GSlides
     // rendering characters wider than canvas does
-    const effectiveWidthPX = convertPTtoPX(
-      sizePT.width - amountPT("indentStart") - amountPT("indentEnd")
-    ) / WTF_CHAR_WIDTH_HACK;
+    const effectiveWidthPX =
+      convertPTtoPX(
+        sizePT.width - amountPT('indentStart') - amountPT('indentEnd'),
+      ) / WTF_CHAR_WIDTH_HACK;
 
     // trim trailing newline to avoid phantom empty paragraph
     const trimmedText = text.rawText.trimEnd();
     const lines = wrapLines(trimmedText, effectiveWidthPX);
 
-    if (constraints === "horizontal" && lines.length > 1) return true;
+    if (constraints === 'horizontal' && lines.length > 1) return true;
 
     // measure each line independently — canvas measureText does not handle '\n'
     let maxLineWidthPX = 0;
     let totalEmHeightPX = 0;
     for (const line of lines) {
       const m = ctx.measureText(line);
-      const lineHeightPX = (m.emHeightAscent as number) + (m.emHeightDescent as number);
+      const lineHeightPX =
+        (m.emHeightAscent as number) + (m.emHeightDescent as number);
       maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
       totalEmHeightPX += lineHeightPX;
     }
@@ -343,30 +374,33 @@ export function calculateFontSize(
     // lineSpacing governs the gaps *between* lines, not below the last one.
     // total = N em-boxes + (N-1) inter-line gaps
     const avgLineHeightPX = totalEmHeightPX / lines.length;
-    const interLineGapPX = avgLineHeightPX * (computedStyle.lineSpacing / 100 - 1);
+    const interLineGapPX =
+      avgLineHeightPX * (computedStyle.lineSpacing / 100 - 1);
     const totalHeightPX = totalEmHeightPX + (lines.length - 1) * interLineGapPX;
 
     // spaceBelow/spaceAbove apply *between* paragraphs only, not after the last one
     // Sum spaceBelow/spaceAbove from each paragraph's actual style,
     // excluding the last paragraph (spacing applies *between* paragraphs).
     // This avoids incorrectly inheriting a template-level spaceBelow onto every \n.
-    const paragraphMarkers = element.shape?.text?.textElements
-      ?.filter(te => te.paragraphMarker)
-      ?? [];
+    const paragraphMarkers =
+      element.shape?.text?.textElements?.filter(te => te.paragraphMarker) ?? [];
 
     // drop the last marker — its spaceBelow has nothing after it to space
-    const paragraphSpacingPT = paragraphMarkers.slice(0, -1).reduce((sum, te) => {
-      const style = te.paragraphMarker?.style;
-      const below = style?.spaceBelow?.magnitude ?? 0;
-      const above = style?.spaceAbove?.magnitude ?? 0;
-      return sum + below + above;
-    }, 0);
+    const paragraphSpacingPT = paragraphMarkers
+      .slice(0, -1)
+      .reduce((sum, te) => {
+        const style = te.paragraphMarker?.style;
+        const below = style?.spaceBelow?.magnitude ?? 0;
+        const above = style?.spaceAbove?.magnitude ?? 0;
+        return sum + below + above;
+      }, 0);
 
     // compare raw canvas measurement against unmodified effective width
-    const widthPT  = convertPXtoPT(maxLineWidthPX);
+    const widthPT = convertPXtoPT(maxLineWidthPX);
     const heightPT = convertPXtoPT(totalHeightPX) + paragraphSpacingPT;
 
-    const effectiveWidthPT = sizePT.width - amountPT("indentStart") - amountPT("indentEnd");
+    const effectiveWidthPT =
+      sizePT.width - amountPT('indentStart') - amountPT('indentEnd');
     const effectiveHeightPT = sizePT.height;
     return widthPT > effectiveWidthPT || heightPT > effectiveHeightPT;
   };

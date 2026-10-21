@@ -20,7 +20,11 @@ import {SlideDefinition, StyleDefinition} from '../slides.js';
 import parseMarkdown from './parser.js';
 import {Context} from './env.js';
 import highlightSyntax from './syntax_highlight.js';
-import {parseStyleSheet, parseInlineStyle, updateStyleDefinition} from './css.js';
+import {
+  parseStyleSheet,
+  parseInlineStyle,
+  updateStyleDefinition,
+} from './css.js';
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
@@ -81,7 +85,7 @@ function processTokens(tokens: Token[], context: Context): void {
 
 function applyTokenStyle(
   token: Token,
-  style: StyleDefinition
+  style: StyleDefinition,
 ): StyleDefinition {
   if (!token.attrs) {
     return style;
@@ -135,7 +139,7 @@ inlineTokenRules['html_inline'] = (token, context) => {
         break;
       case 'code':
         style.fontFamily = 'Roboto Mono';
-        style.fontSize = { magnitude:14, unit:'PT' };
+        style.fontSize = {magnitude: 14, unit: 'PT'};
         break;
       case 'sub':
         style.baselineOffset = 'SUBSCRIPT';
@@ -155,7 +159,7 @@ inlineTokenRules['html_inline'] = (token, context) => {
     }
 
     const styleAttr = node.attrs.find(
-      (attr: {name: string}) => attr.name === 'style'
+      (attr: {name: string}) => attr.name === 'style',
     );
     if (styleAttr) {
       const css = parseInlineStyle(styleAttr.value);
@@ -207,10 +211,13 @@ inlineTokenRules['paragraph_close'] = (token, context) => {
     // Empty column marker, just clear flag
     context.markerParagraph = false;
   } else {
-    const hasTrailingNewline = context.text && /[\r\n]$/.test(context.text.rawText);
+    const hasTrailingNewline =
+      context.text && /[\r\n]$/.test(context.text.rawText);
 
     // Only add a trailing newline if none exists
-    if (context.text && !hasTrailingNewline) { context.appendText('\n'); }
+    if (context.text && !hasTrailingNewline) {
+      context.appendText('\n');
+    }
   }
   context.endStyle();
 };
@@ -277,9 +284,9 @@ inlineTokenRules['code_inline'] = (token, context) => {
   context.startStyle(style);
   const language = token.info ? token.info.trim() : undefined;
   highlightSyntax(token.content, language, context);
-  
+
   /*
-  NOTE(Emmanuel): this was the original code, now replaced with 
+  NOTE(Emmanuel): this was the original code, now replaced with
   the two lines above
 
   // For code blocks, replace line feeds with vertical tabs to keep
@@ -287,7 +294,7 @@ inlineTokenRules['code_inline'] = (token, context) => {
   // space that appears between paragraphs
   context.appendText(token.content.replace(/\n/g, '\u000b'));
   */
- 
+
   context.endStyle();
 };
 
@@ -316,7 +323,7 @@ inlineTokenRules['emoji'] = (token, context) =>
 
 inlineTokenRules['bullet_list_open'] = inlineTokenRules['ordered_list_open'] = (
   token,
-  context
+  context,
 ) => {
   assert(context.text);
   const style = applyTokenStyle(token, {});
@@ -413,12 +420,16 @@ fullTokenRules['html_block'] = (token, context) => {
 
   // if the content is a comment, we just use the contents of the comment
   // otherwise we just use it verbatim
-  const htmlContent = (matchedComment? matchedComment[1] : token.content);
+  const htmlContent = matchedComment ? matchedComment[1] : token.content;
 
   // remove any tab characters, which are not allowed in markdown
-  const tokens = parseMarkdown(htmlContent.replaceAll('\t',''));
+  const tokens = parseMarkdown(htmlContent.replaceAll('\t', ''));
   processTokens(tokens, subContext);
-  if (subContext.text && subContext.text.rawText.trim().length && matchedComment) {
+  if (
+    subContext.text &&
+    subContext.text.rawText.trim().length &&
+    matchedComment
+  ) {
     context.currentSlide.notes = subContext.text;
   }
   ruleSet = fullTokenRules;
@@ -556,12 +567,14 @@ fullTokenRules['td_close'] = fullTokenRules['th_close'] = (token, context) => {
   context.startTextBlock();
 };
 
-fullTokenRules['math_inline'] =
-fullTokenRules['math_block'] = (token, context) => {
+fullTokenRules['math_inline'] = fullTokenRules['math_block'] = (
+  token,
+  context,
+) => {
   assert(context.currentSlide);
   const image = {
     source: token.content,
-    type: "math",
+    type: 'math',
     width: 0,
     height: 0,
     style: attr(token, 'style'),
@@ -608,7 +621,7 @@ fullTokenRules['generated_image'] = (token, context) => {
  */
 export default function extractSlides(
   markdown: string,
-  stylesheet?: string
+  stylesheet?: string,
 ): SlideDefinition[] {
   const tokens = parseMarkdown(markdown);
   const css = parseStyleSheet(stylesheet);

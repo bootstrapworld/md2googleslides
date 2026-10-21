@@ -18,7 +18,7 @@ import {SlideDefinition, ImageDefinition} from './slides.js';
 import matchLayout from './layout/match_layout.js';
 import {URL} from 'url';
 import {google, Auth, slides_v1 as SlidesV1} from 'googleapis';
-import uploadLocalImage, { UPLOAD_FOLDER_ID } from './images/upload.js';
+import uploadLocalImage, {UPLOAD_FOLDER_ID} from './images/upload.js';
 import probeImage from './images/probe.js';
 import maybeGenerateImage from './images/generate.js';
 import assert from 'assert';
@@ -29,21 +29,20 @@ import path from 'path';
 import cliProgress from 'cli-progress';
 
 const USER_HOME =
-  process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE || "";
+  process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE || '';
 
 const STORED_API_KEY_PATH = path.join(
   USER_HOME,
   '.md2googleslides',
-  'credentials.json'
+  'credentials.json',
 );
 
 // wait a given number of milliseconds
 async function sleep(ms: number) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
 }
-
 
 /**
  * Generates slides from Markdown or HTML. Requires an authorized
@@ -98,7 +97,7 @@ export default class SlideGenerator {
   public static async newPresentation(
     oauth2Client: Auth.OAuth2Client,
     title: string,
-    parentId: string = "",
+    parentId: string = '',
   ): Promise<SlideGenerator> {
     const api = google.slides({version: 'v1', auth: oauth2Client});
     const res = await api.presentations.create({
@@ -122,13 +121,13 @@ export default class SlideGenerator {
     oauth2Client: Auth.OAuth2Client,
     title: string,
     presentationId: string,
-    parentId: string = "",
+    parentId: string = '',
   ): Promise<SlideGenerator> {
     const drive = google.drive({version: 'v3', auth: oauth2Client});
-    
+
     const res = await drive.files.copy({
       fileId: presentationId,
-      requestBody: { name: title, parents: [parentId] }
+      requestBody: {name: title, parents: [parentId]},
     });
 
     assert(res.data.id);
@@ -144,13 +143,14 @@ export default class SlideGenerator {
    */
   public static async forPresentation(
     oauth2Client: Auth.OAuth2Client,
-    presentationId: string
+    presentationId: string,
   ): Promise<SlideGenerator> {
     const api = google.slides({version: 'v1', auth: oauth2Client});
     const res = await api.presentations
       .get({presentationId: presentationId})
-      .catch(e => { 
-        e.errors[0].message = "could not find presentation with ID="+presentationId;
+      .catch(e => {
+        e.errors[0].message =
+          'could not find presentation with ID=' + presentationId;
         throw e;
       });
     const presentation = res.data;
@@ -166,7 +166,7 @@ export default class SlideGenerator {
    */
   public async generateFromMarkdown(
     markdown: string,
-    {css}: {css: string;}
+    {css}: {css: string},
   ): Promise<string> {
     assert(this.presentation?.presentationId);
     this.slides = extractSlides(markdown, css);
@@ -205,33 +205,36 @@ export default class SlideGenerator {
 
   protected async processImages<T>(
     fn: (img: ImageDefinition) => Promise<T>,
-    upload: boolean = false
+    upload: boolean = false,
   ): Promise<void> {
     const promises = [];
     const images: ImageDefinition[] = [];
-    
+
     // collect all the background images and body images
     this.slides.forEach(slide => {
       if (slide.backgroundImage) {
         images.push(slide.backgroundImage);
       }
       slide.bodies.forEach(body =>
-        body.images.forEach(image => images.push(image)));
+        body.images.forEach(image => images.push(image)),
+      );
     });
 
     // process each image, throttling if it's an upload
-    const MAX_IMAGES_PER_SEC = 1000
-    if(upload && (images.length > 0)) {
-      console.log("Uploading images for this slide deck to storage bucket");
+    const MAX_IMAGES_PER_SEC = 1000;
+    if (upload && images.length > 0) {
+      console.log('Uploading images for this slide deck to storage bucket');
       const bar = new cliProgress.SingleBar({
         format: 'Sending {value}/{total} image files to storage bucket',
-        hideCursor: false
+        hideCursor: false,
       });
       bar.start(images.length, 0);
       // make sure to avoid going over MAX_IMAGES_PER_SEC requests/sec
-      for(const [i, image] of images.entries()) {
+      for (const [i, image] of images.entries()) {
         bar.increment();
-        if(i%MAX_IMAGES_PER_SEC == 0) { await sleep(250); }
+        if (i % MAX_IMAGES_PER_SEC == 0) {
+          await sleep(250);
+        }
         promises.push(fn(image));
       }
       bar.stop();
@@ -247,23 +250,24 @@ export default class SlideGenerator {
   }
 
   protected async uploadLocalImages(): Promise<void> {
-    const urlCache: { [key: string]: string } = {};
+    const urlCache: {[key: string]: string} = {};
     const uploadImageifLocal = async (
-      image: ImageDefinition
+      image: ImageDefinition,
     ): Promise<void> => {
       assert(image.url);
       const parsedUrl = new URL(image.url);
 
       // if it's not a file, just terminate
       if (parsedUrl.protocol !== 'file:') {
-        return Promise.reject(new Error(`The url ${parsedUrl}was not a valid file`));
+        return Promise.reject(
+          new Error(`The url ${parsedUrl}was not a valid file`),
+        );
       }
       // if we've already uploaded it, use the cached link
-      else if(urlCache[parsedUrl.pathname]) { 
+      else if (urlCache[parsedUrl.pathname]) {
         image.url = urlCache[parsedUrl.pathname];
         return Promise.resolve();
-      }
-      else {
+      } else {
         image.url = await uploadLocalImage(parsedUrl.pathname, this.drive);
         urlCache[parsedUrl.pathname] = image.url;
         return Promise.resolve();
@@ -333,7 +337,7 @@ export default class SlideGenerator {
    * @returns {Promise.<*>}
    */
   protected async updatePresentation(
-    batch: SlidesV1.Schema$BatchUpdatePresentationRequest
+    batch: SlidesV1.Schema$BatchUpdatePresentationRequest,
   ): Promise<void> {
     debug('Updating presentation: %O', batch);
     assert(this.presentation?.presentationId);
@@ -341,7 +345,7 @@ export default class SlideGenerator {
       return Promise.resolve();
     }
 
-    /* 
+    /*
       IMAGE THROTTLING
       If the slide deck includes images, we risk hitting our storage bucket's
       request/sec limit. To deal with this, we process the requests *in-order*,
@@ -355,13 +359,15 @@ export default class SlideGenerator {
        again, and throttling becomes an issue.
     */
     const MAX_IMAGES_PER_CHUNK = 1000;
-    let requestChunks:SlidesV1.Schema$Request[][] = [];
-    let currentChunk:SlidesV1.Schema$Request[] = [];
+    const requestChunks: SlidesV1.Schema$Request[][] = [];
+    let currentChunk: SlidesV1.Schema$Request[] = [];
     let createImageRequestCount = 0;
 
-    batch.requests.forEach( (req) => {
-      if(req["createImage"]) { createImageRequestCount++; }
-      if(createImageRequestCount > MAX_IMAGES_PER_CHUNK) {
+    batch.requests.forEach(req => {
+      if (req['createImage']) {
+        createImageRequestCount++;
+      }
+      if (createImageRequestCount > MAX_IMAGES_PER_CHUNK) {
         requestChunks.push(currentChunk);
         createImageRequestCount = 0;
         currentChunk = [req];
@@ -371,7 +377,7 @@ export default class SlideGenerator {
     });
     requestChunks.push(currentChunk);
 
-    /* 
+    /*
       Throttle the processing of these chunks, so that Google Slides
       never sends more than one chunk every X seconds. This keeps us
       from blowing the request/sec limit in any X second window
@@ -384,13 +390,13 @@ export default class SlideGenerator {
     const DELAY_BTW_REQUESTS = 0;
     const bar = new cliProgress.SingleBar({
       format: 'Sending {value}/{total} request batches to google',
-      hideCursor: false
+      hideCursor: false,
     });
     bar.start(requestChunks.length, 0);
     for await (const [i, chunk] of requestChunks.entries()) {
       bar.increment();
       batch.requests = chunk;
-      let response = await this.api.presentations.batchUpdate({
+      const response = await this.api.presentations.batchUpdate({
         presentationId: this.presentation.presentationId,
         requestBody: batch,
       });
@@ -406,7 +412,9 @@ export default class SlideGenerator {
       fields: 'files(id)',
     });
     const files: Array<{id: string}> = res.data.files || [];
-    await Promise.all(files.map(file => this.drive.files.delete({ fileId: file.id })));
+    await Promise.all(
+      files.map(file => this.drive.files.delete({fileId: file.id})),
+    );
   }
 
   /**

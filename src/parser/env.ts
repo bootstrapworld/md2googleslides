@@ -22,7 +22,7 @@ import {
   VideoDefinition,
 } from '../slides.js';
 import {v1 as uuid} from 'uuid';
-import {isDeepStrictEqual}  from 'util';
+import {isDeepStrictEqual} from 'util';
 import {Stylesheet} from './css.js';
 import assert from 'assert';
 import {Element} from 'parse5';
@@ -113,10 +113,12 @@ export class Context {
       return; // Ignore empty text style
     }
     style.end = this.text.rawText.length;
-    if (style.start === style.end || this.text.rawText == "") {
+    if (style.start === style.end || this.text.rawText == '') {
       return; // Ignore empty ranges or ranges containing the empty string
     }
-    if(Object.keys(style).filter(k=>['start', 'end'].includes(k)).length == 0) {
+    if (
+      Object.keys(style).filter(k => ['start', 'end'].includes(k)).length == 0
+    ) {
       return;
     }
     if (this.text.textRuns.find(run => isDeepStrictEqual(run, style))) {

@@ -24,14 +24,14 @@ import {Color, StyleDefinition} from '../slides';
 import camelCase from 'just-camel-case';
 
 // replacement for lodash._mapKeys
-const mapKeys = (obj:Object, mapper:any) =>
+const mapKeys = (obj: object, mapper: any) =>
   Object.entries(obj).reduce(
     (acc, [key, value]) => ({
       ...acc,
       [mapper(value, key)]: value,
     }),
-    {}
-  )
+    {},
+  );
 const debug = Debug('md2gslides');
 
 export interface CssRule {
@@ -58,7 +58,7 @@ function parseColorString(hexString: string): Color | undefined {
 }
 
 function normalizeKeys(css: CssRule): CssRule {
-  return mapKeys(css, (value:any, key:any) => camelCase(key));
+  return mapKeys(css, (value: any, key: any) => camelCase(key));
 }
 
 export function parseStyleSheet(stylesheet: string | undefined): Stylesheet {
@@ -73,7 +73,7 @@ export function parseInlineStyle(inlineStyle: string): CssRule {
 
 export function updateStyleDefinition(
   css: CssRule,
-  style: StyleDefinition
+  style: StyleDefinition,
 ): StyleDefinition {
   const normalizedCss = normalizeKeys(css);
   for (const [key, value] of Object.entries(normalizedCss)) {

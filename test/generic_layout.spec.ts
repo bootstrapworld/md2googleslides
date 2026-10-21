@@ -29,7 +29,7 @@ chai.use(chaiSubset);
 describe('GenericLayout', () => {
   const fixturePath = fileURLToPath(new URL('./fixtures', import.meta.url));
   const presentation = jsonfile.readFileSync(
-    path.join(fixturePath, 'mock_presentation.json')
+    path.join(fixturePath, 'mock_presentation.json'),
   );
 
   describe('with title slide', () => {

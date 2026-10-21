@@ -89,7 +89,7 @@ describe('UserAuthorizer', () => {
         });
         const credentials = authorizer.getUserCredentials(
           'user@example.com',
-          'https://www.googleapis.com/auth/slides'
+          'https://www.googleapis.com/auth/slides',
         );
         return expect(credentials).to.eventually.be.rejected;
       });
@@ -102,7 +102,7 @@ describe('UserAuthorizer', () => {
         });
         const credentials = authorizer.getUserCredentials(
           'user@example.com',
-          'https://www.googleapis.com/auth/slides'
+          'https://www.googleapis.com/auth/slides',
         );
         return expect(credentials).to.eventually.be.rejected;
       });
@@ -115,11 +115,11 @@ describe('UserAuthorizer', () => {
         });
         const credentials = authorizer.getUserCredentials(
           'user@example.com',
-          'https://www.googleapis.com/auth/slides'
+          'https://www.googleapis.com/auth/slides',
         );
         return expect(credentials).to.eventually.have.nested.property(
           'credentials.access_token',
-          'new_token'
+          'new_token',
         );
       });
     });
@@ -129,11 +129,11 @@ describe('UserAuthorizer', () => {
         const authorizer = new UserAuthorizer(options);
         const credentials = authorizer.getUserCredentials(
           'current',
-          'https://www.googleapis.com/auth/slides'
+          'https://www.googleapis.com/auth/slides',
         );
         return expect(credentials).to.eventually.have.nested.property(
           'credentials.access_token',
-          'ya29.123'
+          'ya29.123',
         );
       });
 
@@ -142,11 +142,11 @@ describe('UserAuthorizer', () => {
         const authorizer = new UserAuthorizer(options);
         const credentials = authorizer.getUserCredentials(
           'expired',
-          'https://www.googleapis.com/auth/slides'
+          'https://www.googleapis.com/auth/slides',
         );
         return expect(credentials).to.eventually.have.nested.property(
           'credentials.access_token',
-          'new_token'
+          'new_token',
         );
       });
     });

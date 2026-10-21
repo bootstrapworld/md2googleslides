@@ -56,15 +56,15 @@ export default class GenericLayout {
   public constructor(
     name: string,
     presentation: SlidesV1.Schema$Presentation,
-    slide: SlideDefinition
+    slide: SlideDefinition,
   ) {
     this.name = name;
     this.presentation = presentation;
     this.slide = slide;
 
-    const addPageEltsToMap = (page:SlidesV1.Schema$Page) => {
+    const addPageEltsToMap = (page: SlidesV1.Schema$Page) => {
       page?.pageElements?.forEach(e => this.pageElementMap.set(e.objectId, e));
-    }
+    };
     presentation.slides?.forEach(addPageEltsToMap);
     presentation.masters?.forEach(addPageEltsToMap);
     presentation.layouts?.forEach(addPageEltsToMap);
@@ -78,14 +78,13 @@ export default class GenericLayout {
   private findParentObject(
     pageElement: SlidesV1.Schema$PageElement,
   ): SlidesV1.Schema$PageElement | undefined {
-
     // if it's a placeholder, lookup the parent shape whose style we need to match
     const parentObjectId = pageElement?.shape?.placeholder?.parentObjectId;
     return this.pageElementMap.get(parentObjectId);
   }
 
   public appendCreateSlideRequest(
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
   ): SlidesV1.Schema$Request[] {
     const layoutId = findLayoutIdByName(this.presentation, this.name);
     if (!layoutId) {
@@ -107,34 +106,36 @@ export default class GenericLayout {
 
   // called once, for each slide!
   public appendContentRequests(
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
   ): SlidesV1.Schema$Request[] {
     this.appendFillPlaceholderTextRequest(
-      this.slide.title, 
-      'TITLE', 
-      requests, 
-      "horizontal"
+      this.slide.title,
+      'TITLE',
+      requests,
+      'horizontal',
     );
     this.appendFillPlaceholderTextRequest(
       this.slide.title,
       'CENTERED_TITLE',
-      requests
+      requests,
     );
     this.appendFillPlaceholderTextRequest(
       this.slide.subtitle,
       'SUBTITLE',
-      requests
+      requests,
     );
 
     if (this.slide.backgroundImage) {
       this.appendSetBackgroundImageRequest(
         this.slide.backgroundImage,
-        requests
+        requests,
       );
     }
 
     if (this.slide.tables.length) {
-      this.slide.tables.forEach(t => this.appendCreateTableRequest(t, requests));
+      this.slide.tables.forEach(t =>
+        this.appendCreateTableRequest(t, requests),
+      );
     }
 
     if (this.slide.bodies) {
@@ -146,24 +147,31 @@ export default class GenericLayout {
       );
       const bodyCount = Math.min(
         bodyElements?.length ?? 0,
-        this.slide.bodies.length
+        this.slide.bodies.length,
       );
 
       // grab all the image placeholders for this slide
-      const imagePlaceholders = findPlaceholder(
-        this.presentation,
-        this.slide.objectId,
-        'PICTURE'
-      ) || [];
+      const imagePlaceholders =
+        findPlaceholder(this.presentation, this.slide.objectId, 'PICTURE') ||
+        [];
 
       for (let i = 0; i < bodyCount; ++i) {
         const placeholder = bodyElements![i];
         const body = this.slide.bodies[i];
-        this.appendFillPlaceholderTextRequest(body.text, placeholder, requests, "vertical");
+        this.appendFillPlaceholderTextRequest(
+          body.text,
+          placeholder,
+          requests,
+          'vertical',
+        );
 
         if (body.images && body.images.length) {
           // send all the images, and just the first placeholder
-          this.appendCreateImageRequests(body.images, imagePlaceholders, requests);
+          this.appendCreateImageRequests(
+            body.images,
+            imagePlaceholders,
+            requests,
+          );
         }
         if (body.videos && body.videos.length) {
           this.appendCreateVideoRequests(body.videos, placeholder, requests);
@@ -171,21 +179,21 @@ export default class GenericLayout {
       }
 
       // if there were any, remove all image placeholders from the slide
-      imagePlaceholders.forEach(p => 
-        requests.push({'deleteObject': {'objectId': p!['objectId']}}));
-
+      imagePlaceholders.forEach(p =>
+        requests.push({deleteObject: {objectId: p!['objectId']}}),
+      );
     }
 
     if (this.slide.notes) {
       assert(this.slide.objectId);
       const objectId = findSpeakerNotesObjectId(
         this.presentation,
-        this.slide.objectId
+        this.slide.objectId,
       );
       this.appendInsertTextRequests(
         this.slide.notes,
         {objectId: objectId},
-        requests
+        requests,
       );
     }
 
@@ -196,7 +204,7 @@ export default class GenericLayout {
     value: TextDefinition | undefined,
     placeholder: string | SlidesV1.Schema$PageElement,
     requests: SlidesV1.Schema$Request[],
-    constraints?: string
+    constraints?: string,
   ): void {
     if (!value) {
       debug('No text for placeholder %s');
@@ -207,7 +215,7 @@ export default class GenericLayout {
       const pageElements = findPlaceholder(
         this.presentation,
         this.slide.objectId,
-        placeholder
+        placeholder,
       );
       if (!pageElements) {
         debug('Skipping undefined placeholder %s', placeholder);
@@ -217,7 +225,7 @@ export default class GenericLayout {
     }
 
     // compute an array of ancestor elts, from oldest-to-youngest
-    let ancestors = [];
+    const ancestors = [];
     let parentObject = this.findParentObject(placeholder);
     while (parentObject) {
       ancestors.unshift(parentObject); // add to beginning
@@ -229,7 +237,7 @@ export default class GenericLayout {
       {objectId: placeholder.objectId},
       requests,
       constraints, // passing constraints turns on auto-fitting
-      ancestors
+      ancestors,
     );
   }
 
@@ -242,9 +250,8 @@ export default class GenericLayout {
     constraints?: string,
     ancestors?: SlidesV1.Schema$PageElement[],
   ): void {
-
     // make sure there's text to insert
-    if(text.rawText.trimLeft().length == 0) {
+    if (text.rawText.trimLeft().length == 0) {
       return; // empty requests are invalid, so don't bother
     }
 
@@ -252,20 +259,18 @@ export default class GenericLayout {
     const request = {
       insertText: Object.assign(
         {
-          text: text.rawText
+          text: text.rawText,
         },
-        locationProps
+        locationProps,
       ),
     };
     requests.push(request);
-
 
     // Apply any text styles present.
     // Most of the work for generating the text runs
     // is performed when parsing markdown.
     text.textRuns.reverse();
     for (const textRun of text.textRuns) {
-
       const request: SlidesV1.Schema$Request = {
         updateTextStyle: Object.assign(
           {
@@ -285,20 +290,27 @@ export default class GenericLayout {
               fontFamily: textRun.fontFamily,
               // if we're autofitting, call out to calculateFontSize
               // to render a canvas element and estimate size
-              fontSize: (ancestors?.length && constraints && !textRun.fontSize)? {
-                magnitude: calculateFontSize(ancestors, text, constraints),
-                unit: 'PT'
-              } : textRun.fontSize,
+              fontSize:
+                ancestors?.length && constraints && !textRun.fontSize
+                  ? {
+                      magnitude: calculateFontSize(
+                        ancestors,
+                        text,
+                        constraints,
+                      ),
+                      unit: 'PT',
+                    }
+                  : textRun.fontSize,
               link: textRun.link,
               baselineOffset: textRun.baselineOffset,
             },
           },
-          locationProps
+          locationProps,
         ),
       };
       assert(request.updateTextStyle?.style);
       request.updateTextStyle.fields = this.computeShallowFieldMask(
-        request.updateTextStyle.style
+        request.updateTextStyle.style,
       );
 
       if (request.updateTextStyle.fields.length) {
@@ -325,7 +337,7 @@ export default class GenericLayout {
                 ? 'NUMBERED_DIGIT_ALPHA_ROMAN'
                 : 'BULLET_DISC_CIRCLE_SQUARE',
           },
-          locationProps
+          locationProps,
         ),
       };
       requests.push(request);
@@ -334,12 +346,12 @@ export default class GenericLayout {
 
   protected appendSetBackgroundImageRequest(
     image: ImageDefinition,
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
   ): void {
     debug(
       'Slide #%d: setting background image to %s',
       this.slide.index,
-      image.url
+      image.url,
     );
 
     requests.push({
@@ -358,126 +370,134 @@ export default class GenericLayout {
   }
 
   protected appendCreateImageRequests(
-      images: ImageDefinition[],
-      placeholders: SlidesV1.Schema$PageElement[],
-      requests: SlidesV1.Schema$Request[]
+    images: ImageDefinition[],
+    placeholders: SlidesV1.Schema$PageElement[],
+    requests: SlidesV1.Schema$Request[],
+  ): void {
+    const that = this;
+
+    // Convert pixels to EMUs. If there's a placeholder, resize to fit.
+    function transformImageSize(
+      image: ImageDefinition,
+      placeholder: SlidesV1.Schema$PageElement,
     ): void {
-      const that = this;
+      // TODO - Fix weird cast
+      const layer = (Layout as (s: string) => Layout.PackingSmith)(
+        'left-right',
+      ); // TODO - Configurable?
 
-      // Convert pixels to EMUs. If there's a placeholder, resize to fit.
-      function transformImageSize(
-        image: ImageDefinition, 
-        placeholder: SlidesV1.Schema$PageElement
-      ): void {
-        // TODO - Fix weird cast
-        const layer = (Layout as (s: string) => Layout.PackingSmith)('left-right'); // TODO - Configurable?
+      debug('Slide #%d: adding inline image %s', that.slide.index, image.url);
+      layer.addItem({
+        width: image.width + image.padding * 2,
+        height: image.height + image.padding * 2,
+        meta: image,
+      });
 
-        debug('Slide #%d: adding inline image %s', that.slide.index, image.url);
-        layer.addItem({
-          width: image.width + image.padding * 2,
-          height: image.height + image.padding * 2,
-          meta: image,
-        });
+      // bounding box of the entire slide
+      const {width: slideWidth, height: slideHeight} =
+        that.presentation.pageSize!;
 
-        // bounding box of the entire slide
-        const {width: slideWidth, height: slideHeight} = (that.presentation.pageSize)!;
-
-        // if there's a placeholder, use it as a bounding box
-        // otherwise: if the image is smaller than 50% of the slide
-        // use actual size. Otherwise 
-        let box;
-        if(placeholder) {
-          box = that.getBodyBoundingBox(placeholder);
-        } else {
-          const maxWidth  = slideWidth!.magnitude!  * 0.5;
-          const maxHeight = slideHeight!.magnitude! * 0.5;
-          const imgWidth  = Math.min(image.width  * EMUperPixel, maxWidth);
-          const imgHeight = Math.min(image.height * EMUperPixel, maxHeight);
-          box = {
-            width:  imgWidth,
-            height: imgHeight,
-            x: maxWidth - imgWidth / 2, 
-            y: maxHeight - imgHeight / 2, 
-          };
-        }
-
-        const computedLayout = layer.export();
-
-        // assume we're just converting Pixels->EMU, but scale to fit
-        // box will be the dimensions of the placeholder (if defined),
-        // or the entire slide
-        let scaleRatio = EMUperPixel;  
-        scaleRatio = Math.min(
-          box.width  / computedLayout.width,
-          box.height / computedLayout.height
-        );
-
-        const scaledWidth  = computedLayout.width  * scaleRatio;
-        const scaledHeight = computedLayout.height * scaleRatio;
-
-        const baseTranslateX = box.x + (box.width  - scaledWidth)  / 2;
-        const baseTranslateY = box.y + (box.height - scaledHeight) / 2;
-
-        if(computedLayout.items.length > 1) {
-          console.error('IMPOSSIBLE - multiple images in transformAndReplacePlaceholder');
-        }
-        const item = computedLayout.items[0];
-
-        const itemOffsetX = item.meta.offsetX ? item.meta.offsetX : 0;
-        const itemOffsetY = item.meta.offsetY ? item.meta.offsetY : 0;
-        const itemPadding = item.meta.padding ? item.meta.padding : 0;
-        const width  = item.meta.width  * scaleRatio;
-        const height = item.meta.height * scaleRatio;
-        const translateX =
-          baseTranslateX + (item.x + itemPadding + itemOffsetX) * scaleRatio;
-        const translateY =
-          baseTranslateY + (item.y + itemPadding + itemOffsetY) * scaleRatio;
-        const imageId = uuid();
-
-        // add the image at about the same size/position as the placeholder
-        const createImageReq = {
-          createImage: {
-            objectId: imageId,
-            elementProperties: {
-              pageObjectId: that.slide.objectId,
-              size: {
-                height: { magnitude: height, unit: 'EMU'},
-                width:  { magnitude: width,  unit: 'EMU'},
-              },
-              transform: {
-                scaleX: 1, scaleY: 1,
-                translateX: translateX, translateY: translateY,
-                shearX: 0, shearY: 0,
-                unit: 'EMU',
-              },
-            },
-            url: item.meta.url,
-          },
+      // if there's a placeholder, use it as a bounding box
+      // otherwise: if the image is smaller than 50% of the slide
+      // use actual size. Otherwise
+      let box;
+      if (placeholder) {
+        box = that.getBodyBoundingBox(placeholder);
+      } else {
+        const maxWidth = slideWidth!.magnitude! * 0.5;
+        const maxHeight = slideHeight!.magnitude! * 0.5;
+        const imgWidth = Math.min(image.width * EMUperPixel, maxWidth);
+        const imgHeight = Math.min(image.height * EMUperPixel, maxHeight);
+        box = {
+          width: imgWidth,
+          height: imgHeight,
+          x: maxWidth - imgWidth / 2,
+          y: maxHeight - imgHeight / 2,
         };
-        requests.push(createImageReq);
-
-        // add the altText
-        const altTextReq = {
-          updatePageElementAltText: {
-            "objectId": imageId,
-            "title": "",
-            "description": image.altText,
-          }
-        };
-        requests.push(altTextReq);
       }
 
-      images.forEach((image, i) => {
-        debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
-        const placeholder = placeholders[i] || undefined;
-        transformImageSize(image, placeholder)
-      });
+      const computedLayout = layer.export();
+
+      // assume we're just converting Pixels->EMU, but scale to fit
+      // box will be the dimensions of the placeholder (if defined),
+      // or the entire slide
+      let scaleRatio = EMUperPixel;
+      scaleRatio = Math.min(
+        box.width / computedLayout.width,
+        box.height / computedLayout.height,
+      );
+
+      const scaledWidth = computedLayout.width * scaleRatio;
+      const scaledHeight = computedLayout.height * scaleRatio;
+
+      const baseTranslateX = box.x + (box.width - scaledWidth) / 2;
+      const baseTranslateY = box.y + (box.height - scaledHeight) / 2;
+
+      if (computedLayout.items.length > 1) {
+        console.error(
+          'IMPOSSIBLE - multiple images in transformAndReplacePlaceholder',
+        );
+      }
+      const item = computedLayout.items[0];
+
+      const itemOffsetX = item.meta.offsetX ? item.meta.offsetX : 0;
+      const itemOffsetY = item.meta.offsetY ? item.meta.offsetY : 0;
+      const itemPadding = item.meta.padding ? item.meta.padding : 0;
+      const width = item.meta.width * scaleRatio;
+      const height = item.meta.height * scaleRatio;
+      const translateX =
+        baseTranslateX + (item.x + itemPadding + itemOffsetX) * scaleRatio;
+      const translateY =
+        baseTranslateY + (item.y + itemPadding + itemOffsetY) * scaleRatio;
+      const imageId = uuid();
+
+      // add the image at about the same size/position as the placeholder
+      const createImageReq = {
+        createImage: {
+          objectId: imageId,
+          elementProperties: {
+            pageObjectId: that.slide.objectId,
+            size: {
+              height: {magnitude: height, unit: 'EMU'},
+              width: {magnitude: width, unit: 'EMU'},
+            },
+            transform: {
+              scaleX: 1,
+              scaleY: 1,
+              translateX: translateX,
+              translateY: translateY,
+              shearX: 0,
+              shearY: 0,
+              unit: 'EMU',
+            },
+          },
+          url: item.meta.url,
+        },
+      };
+      requests.push(createImageReq);
+
+      // add the altText
+      const altTextReq = {
+        updatePageElementAltText: {
+          objectId: imageId,
+          title: '',
+          description: image.altText,
+        },
+      };
+      requests.push(altTextReq);
     }
+
+    images.forEach((image, i) => {
+      debug('Slide #%d: adding inline image %s', this.slide.index, image.url);
+      const placeholder = placeholders[i] || undefined;
+      transformImageSize(image, placeholder);
+    });
+  }
 
   protected appendCreateVideoRequests(
     videos: VideoDefinition[],
     placeholder: SlidesV1.Schema$PageElement | undefined,
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
   ): void {
     if (videos.length > 1) {
       throw new Error('Multiple videos per slide are not supported.');
@@ -490,7 +510,7 @@ export default class GenericLayout {
 
     const scaleRatio = Math.min(
       box.width / video.width,
-      box.height / video.height
+      box.height / video.height,
     );
 
     const scaledWidth = video.width * scaleRatio;
@@ -542,7 +562,7 @@ export default class GenericLayout {
 
   protected appendCreateTableRequest(
     table: TableDefinition,
-    requests: SlidesV1.Schema$Request[]
+    requests: SlidesV1.Schema$Request[],
   ): void {
     const tableId = uuid();
     let hasHeader = true;
@@ -550,14 +570,14 @@ export default class GenericLayout {
     // check to see if the first cell of the first row asks us to delete
     // necessary to handle racket workaround for the markdown limitation
     // that all tables have headers
-    if(table.cells[0][0].rawText == "DELETE THIS ROW") {
+    if (table.cells[0][0].rawText == 'DELETE THIS ROW') {
       hasHeader = false;
     }
     // If it's a table with no header...
-    if(!hasHeader) {
-      table.cells.shift();               // delete the row
-      table.rows = table.rows - 1;       // update row count
-    } 
+    if (!hasHeader) {
+      table.cells.shift(); // delete the row
+      table.rows = table.rows - 1; // update row count
+    }
 
     requests.push({
       createTable: {
@@ -583,7 +603,7 @@ export default class GenericLayout {
               columnIndex: parseInt(c),
             },
           },
-          requests
+          requests,
         );
       }
     }
@@ -596,10 +616,10 @@ export default class GenericLayout {
         tableRange: {
           location: {
             rowIndex: 0,
-            columnIndex: 0
+            columnIndex: 0,
           },
           rowSpan: 1,
-          columnSpan: table.columns
+          columnSpan: table.columns,
         },
         tableCellProperties: {
           tableCellBackgroundFill: {
@@ -608,19 +628,19 @@ export default class GenericLayout {
                 rgbColor: {
                   red: 0.75,
                   green: 0.75,
-                  blue: 0.75
-                }
-              }
-            }
-          }
+                  blue: 0.75,
+                },
+              },
+            },
+          },
         },
-        fields: "tableCellBackgroundFill.solidFill.color"
-      }
+        fields: 'tableCellBackgroundFill.solidFill.color',
+      },
     });
   }
 
   protected calculateBoundingBox(
-    element: SlidesV1.Schema$PageElement
+    element: SlidesV1.Schema$PageElement,
   ): BoundingBox {
     assert(element);
     assert(element.size?.height?.magnitude);
@@ -641,7 +661,7 @@ export default class GenericLayout {
   }
 
   protected getBodyBoundingBox(
-    placeholder: SlidesV1.Schema$PageElement | undefined
+    placeholder: SlidesV1.Schema$PageElement | undefined,
   ): BoundingBox {
     if (placeholder) {
       return this.calculateBoundingBox(placeholder);

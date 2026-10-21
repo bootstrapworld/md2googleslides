@@ -39,7 +39,7 @@ describe('SlideGenerator', () => {
   describe('with new presentation', () => {
     beforeEach(() => {
       const presentation = jsonfile.readFileSync(
-        path.join(fixturePath, 'blank_presentation.json')
+        path.join(fixturePath, 'blank_presentation.json'),
       );
       nock('https://slides.googleapis.com')
         .post('/v1/presentations')
@@ -65,7 +65,7 @@ describe('SlideGenerator', () => {
     it('should load presentation', () => {
       const generator = SlideGenerator.forPresentation(
         buildCredentials(),
-        '12345'
+        '12345',
       );
       return expect(generator).to.eventually.be.instanceof(SlideGenerator);
     });
