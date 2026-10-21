@@ -99,7 +99,6 @@
     "@types/mock-fs": "^4.13.4",
     "@types/node": "26.6.5",
     "@types/parse-color": "^1.0.3",
-    "@types/parse5": "^6.0.3",
     "@types/probe-image-size": "^7.2.4",
     "@types/promise-retry": "^1.1.6",
     "@types/tmp": "^0.2.6",
