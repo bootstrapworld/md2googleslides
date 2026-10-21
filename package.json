@@ -69,10 +69,10 @@
     "markdown-it-mathjax3": "^5.2.0",
     "markdown-it-video": "^0.6.3",
     "mkdirp": "^3.0.1",
-    "native-css": "^2.0.0",
     "opener": "^1.5.2",
     "parse-color": "^1.0.0",
     "parse5": "^8.0.1",
+    "postcss": "^8.5.31",
     "probe-image-size": "^7.2.3",
     "promise-retry": "^2.0.1",
     "puppeteer": "^25.15.0",
@@ -114,11 +114,6 @@
     "nock": "^15.0.5",
     "tsx": "^4.23.15",
     "typescript": "6.0.3"
-  },
-  "overrides": {
-    "native-css": {
-      "css": "^3.0.0"
-    }
   },
   "bin": {
     "md2gslides": "bin/md2gslides.js"

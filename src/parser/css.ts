@@ -16,8 +16,7 @@ import parseColor from 'parse-color';
 import Debug from 'debug';
 // @ts-ignore
 import inlineStylesParse from 'inline-styles-parse';
-// @ts-ignore
-import nativeCSS from 'native-css';
+import postcss from 'postcss';
 import {Color, StyleDefinition} from '../slides';
 
 // replacement for lodash._camelCase
@@ -64,14 +63,57 @@ function normalizeKeys(css: CssRule): CssRule {
   return mapKeys(css, (_value, key) => camelCase(key));
 }
 
+// Selectors become object keys with everything but [a-zA-Z0-9] collapsed to
+// underscores (".foo" -> "foo", "h1 > p" -> "h1_p"), matching the shape the
+// old native-css converter produced.
+function selectorName(selector: string): string {
+  return selector
+    .trim()
+    .replace(/\s\s+/g, ' ')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/^_+/, '')
+    .replace(/_+$/, '');
+}
+
+function convertRules(
+  container: postcss.Container,
+  result: {[key: string]: unknown},
+) {
+  container.each(node => {
+    if (node.type === 'atrule' && node.name === 'media') {
+      const name = `@media ${node.params}`;
+      const media = (result[name] = result[name] || {
+        __expression__: node.params,
+      }) as {[key: string]: unknown};
+      convertRules(node, media);
+    } else if (node.type === 'rule') {
+      const rule: CssRule = {};
+      node.each(decl => {
+        if (decl.type === 'decl') {
+          rule[decl.prop.replace(/-([a-z])/g, (_m, c) => c.toUpperCase())] =
+            decl.value;
+        }
+      });
+      for (const selector of node.selectors) {
+        result[selectorName(selector)] = rule;
+      }
+    }
+  });
+}
+
+function convertCss(css: string): Stylesheet {
+  const result: {[key: string]: unknown} = {};
+  convertRules(postcss.parse(css), result);
+  return result as Stylesheet;
+}
+
 export function parseStyleSheet(stylesheet: string | undefined): Stylesheet {
-  return nativeCSS.convert(stylesheet) as Stylesheet;
+  return convertCss(stylesheet ?? '');
 }
 
 export function parseInlineStyle(inlineStyle: string): CssRule {
   const dummyRule = inlineStylesParse.declarationsToRule(inlineStyle);
-  const css = nativeCSS.convert(dummyRule);
-  return css['dummy'] as CssRule;
+  return convertCss(dummyRule)['dummy'];
 }
 
 export function updateStyleDefinition(
