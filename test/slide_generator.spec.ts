@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import path from 'path';
+import {fileURLToPath} from 'url';
 import jsonfile from 'jsonfile';
 import nock from 'nock';
 import chai from 'chai';
@@ -33,7 +34,7 @@ function buildCredentials(): Auth.OAuth2Client {
 }
 
 describe('SlideGenerator', () => {
-  const fixturePath = path.join(path.dirname(__dirname), 'test', 'fixtures');
+  const fixturePath = fileURLToPath(new URL('./fixtures', import.meta.url));
 
   describe('with new presentation', () => {
     beforeEach(() => {

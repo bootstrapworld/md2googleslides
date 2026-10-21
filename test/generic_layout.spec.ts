@@ -16,6 +16,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import GenericLayout from '../src/layout/generic_layout';
 import jsonfile from 'jsonfile';
 import {slides_v1} from 'googleapis';
@@ -26,7 +27,7 @@ chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 
 describe('GenericLayout', () => {
-  const fixturePath = path.join(path.dirname(__dirname), 'test', 'fixtures');
+  const fixturePath = fileURLToPath(new URL('./fixtures', import.meta.url));
   const presentation = jsonfile.readFileSync(
     path.join(fixturePath, 'mock_presentation.json')
   );

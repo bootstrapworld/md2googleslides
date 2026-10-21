@@ -280,7 +280,7 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].bodies[0].text.textRuns')
-        .length(3);
+        .length(6);
     });
 
     it('should have the correct italic start', () => {
@@ -306,42 +306,42 @@ describe('extractSlides', () => {
 
     it('should have the correct bold start', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[1].start',
+        '[0].bodies[0].text.textRuns[2].start',
         8
       );
     });
 
     it('should have the correct bold end', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[1].end',
+        '[0].bodies[0].text.textRuns[2].end',
         12
       );
     });
 
     it('should have the correct bold style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[1].bold',
+        '[0].bodies[0].text.textRuns[2].bold',
         true
       );
     });
 
     it('should have the correct strikethrough start', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[2].start',
+        '[0].bodies[0].text.textRuns[4].start',
         14
       );
     });
 
     it('should have the correct strikethrough end', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[2].end',
+        '[0].bodies[0].text.textRuns[4].end',
         27
       );
     });
 
     it('should have the correct strikethrough style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[2].strikethrough',
+        '[0].bodies[0].text.textRuns[4].strikethrough',
         true
       );
     });
@@ -368,7 +368,7 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].bodies[0].text.textRuns')
-        .length(1);
+        .length(2);
     });
 
     it('should have the correct start', () => {
@@ -407,7 +407,7 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].bodies[0].text.textRuns')
-        .length(1);
+        .length(2);
     });
 
     it('should have the correct start', () => {
@@ -445,26 +445,26 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].bodies[0].text.textRuns')
-        .length(1);
+        .length(4);
     });
 
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].start',
+        '[0].bodies[0].text.textRuns[1].start',
         1
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].end',
+        '[0].bodies[0].text.textRuns[1].end',
         2
       );
     });
 
     it('should have the correct style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].baselineOffset',
+        '[0].bodies[0].text.textRuns[1].baselineOffset',
         'SUBSCRIPT'
       );
     });
@@ -478,26 +478,26 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].bodies[0].text.textRuns')
-        .length(1);
+        .length(3);
     });
 
     it('should have the correct start', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].start',
+        '[0].bodies[0].text.textRuns[1].start',
         5
       );
     });
 
     it('should have the correct end', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].end',
+        '[0].bodies[0].text.textRuns[1].end',
         6
       );
     });
 
     it('should have the correct style', () => {
       return expect(slides).to.have.nested.property(
-        '[0].bodies[0].text.textRuns[0].baselineOffset',
+        '[0].bodies[0].text.textRuns[1].baselineOffset',
         'SUPERSCRIPT'
       );
     });
@@ -524,7 +524,7 @@ describe('extractSlides', () => {
     it('should have text runs', () => {
       return expect(slides)
         .to.have.nested.property('[0].notes.textRuns')
-        .length(1);
+        .length(8);
     });
 
     it('should have list markers', () => {

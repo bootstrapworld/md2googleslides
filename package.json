@@ -22,8 +22,8 @@
     "compile": "tsc && babel --extensions '.ts,.js' --source-maps both -d lib/ src/",
     "prepublish": "npm run compile",
     "exec": "npm run compile && node bin/md2gslides.js",
-    "test": "mocha --require ./test/register --timeout 5000 \"test/**/*.spec.ts\"",
-    "test-debug": "mocha --debug-brk --inspect --require ./test/register --timeout 5000 \"test/**/*.spec.ts\"",
+    "test": "mocha",
+    "test-debug": "mocha --inspect-brk",
     "lint": "gts lint",
     "eslint-check": "eslint --print-config . | eslint-config-prettier-check",
     "fix": "gts fix",
@@ -108,9 +108,11 @@
     "chai-as-promised": "7.1.1",
     "chai-subset": "1.6.0",
     "gts": "7.0.0",
+    "jsonfile": "^6.2.1",
     "mocha": "11.7.0",
     "mock-fs": "5.2.0",
     "nock": "^13.5.4",
+    "tsx": "^4.23.15",
     "typescript": "5.4.5"
   },
   "overrides": {

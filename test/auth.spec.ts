@@ -15,6 +15,7 @@
 import mockfs from 'mock-fs';
 import nock from 'nock';
 import fs from 'fs';
+import path from 'path';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import UserAuthorizer from '../src/auth';
@@ -40,6 +41,8 @@ function stubTokenRequestError(): void {
 describe('UserAuthorizer', () => {
   beforeEach(() => {
     mockfs({
+      // gaxios lazy-loads its fetch implementation, so keep node_modules readable
+      [path.resolve('node_modules')]: mockfs.load(path.resolve('node_modules')),
       '/tmp/tokens.json': JSON.stringify({
         expired: {
           access_token: 'ya29.123',
