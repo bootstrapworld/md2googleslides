@@ -14,29 +14,81 @@
 
 import Debug from 'debug';
 
-import {mathjax} from 'mathjax-full/js/mathjax.js';
-import {TeX} from 'mathjax-full/js/input/tex.js';
-import {SVG} from 'mathjax-full/js/output/svg.js';
-import {AllPackages} from 'mathjax-full/js/input/tex/AllPackages.js';
-import {liteAdaptor} from 'mathjax-full/js/adaptors/liteAdaptor.js';
-import {RegisterHTMLHandler} from 'mathjax-full/js/handlers/html.js';
 import renderSVG from './svg.js';
 import {ImageDefinition} from '../slides.js';
+
+type MathJaxApi = typeof import('@mathjax/src').default;
 import assert from 'assert';
 
 const debug = Debug('md2gslides');
 
-const adaptor = liteAdaptor();
-RegisterHTMLHandler(adaptor);
+// TeX extensions that MathJax 3's AllPackages provided and that MathJax 4
+// does not already include in input/tex
+const TEX_PACKAGES = [
+  'action',
+  'amscd',
+  'bbox',
+  'boldsymbol',
+  'braket',
+  'bussproofs',
+  'cancel',
+  'cases',
+  'centernot',
+  'color',
+  'colortbl',
+  'empheq',
+  'enclose',
+  'extpfeil',
+  'gensymb',
+  'html',
+  'mathtools',
+  'mhchem',
+  'physics',
+  'setoptions',
+  'tagformat',
+  'unicode',
+  'upgreek',
+  'verb',
+];
 
-const mathjax_document = mathjax.document('', {
-  InputJax: new TeX({packages: AllPackages}),
-  OutputJax: new SVG({fontCache: 'local'}),
-});
+// MathJax 4 loads its components asynchronously, so start it once and share
+// the promise. markdown-it-mathjax3 bundles MathJax 3, and both use the global
+// `MathJax` object: hide it while MathJax 4 loads, then put it back.
+let mathjaxReady: Promise<MathJaxApi> | undefined;
 
-export function get_mathjax_svg(math: string): string {
-  const node = mathjax_document.convert(math);
-  return adaptor.innerHTML(node);
+function startMathJax(): Promise<MathJaxApi> {
+  mathjaxReady ??= (async () => {
+    const globals = globalThis as {MathJax?: unknown};
+    const saved = globals.MathJax;
+    delete globals.MathJax;
+    try {
+      const {default: MathJax} = await import('@mathjax/src');
+      await MathJax.init({
+        loader: {
+          load: [
+            'input/tex',
+            'output/svg',
+            'adaptors/liteDOM',
+            ...TEX_PACKAGES.map(name => `[tex]/${name}`),
+          ],
+        },
+        tex: {packages: {'[+]': TEX_PACKAGES}},
+        svg: {fontCache: 'local'},
+      });
+      return MathJax;
+    } finally {
+      if (saved !== undefined) {
+        globals.MathJax = saved;
+      }
+    }
+  })();
+  return mathjaxReady;
+}
+
+export async function get_mathjax_svg(math: string): Promise<string> {
+  const MathJax = await startMathJax();
+  const node = await MathJax.tex2svgPromise(math, {display: true});
+  return MathJax.startup.adaptor.innerHTML(node);
 }
 
 function addOrMergeStyles(svg: string, style?: string): string {
@@ -59,7 +111,7 @@ function addOrMergeStyles(svg: string, style?: string): string {
 async function renderMathJax(image: ImageDefinition): Promise<string> {
   debug('Generating math image: %O', image);
   assert(image.source);
-  const svg = get_mathjax_svg(image.source);
+  const svg = await get_mathjax_svg(image.source);
   image.source = addOrMergeStyles(svg, image.style);
   image.type = 'svg';
   return await renderSVG(image);
