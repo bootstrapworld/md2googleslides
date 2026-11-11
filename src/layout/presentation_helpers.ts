@@ -366,7 +366,7 @@ export function calculateFontSize(
     let totalEmHeightPX = 0;
     for (const line of lines) {
       const m = ctx.measureText(line);
-      const lineHeightPX = m.emHeightAscent + m.emHeightDescent;
+      const lineHeightPX = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
       maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
       totalEmHeightPX += lineHeightPX;
     }
