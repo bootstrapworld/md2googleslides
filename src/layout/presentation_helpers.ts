@@ -257,6 +257,14 @@ const SLIDES_LINE_HEIGHT_EM = 1.2;
 // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
 const cachedFontCalculations = new Map();
 
+// measureText dominates the font-fit search (the binary search re-wraps the same
+// words at every candidate size), so remember each word's width at a fixed
+// reference size, by font and text. Cleared when it grows large so a long-running
+// process can't hold it forever.
+const MEASURE_REF_PX = 100;
+const MEASURE_CACHE_LIMIT = 200000;
+const cachedTextWidths = new Map<string, number>();
+
 export function calculateFontSize(
   ancestors: SlidesV1.Schema$PageElement[], // oldest-to-youngest
   text: TextDefinition,
@@ -330,18 +338,49 @@ export function calculateFontSize(
 
   // Pixel-accurate line wrapping using canvas measurements, respecting hard breaks.
   // Replaces the character-count-based splitter(), which was inaccurate for variable-width text.
+  //
+  // Widths are measured once per distinct word at a fixed reference size and scaled
+  // linearly to the size being tried, so the font-size search costs a few arithmetic
+  // ops per word instead of a measureText per word per candidate size. (Ignores
+  // kerning across spaces and sub-pixel rounding, which is well inside the
+  // WTF_CHAR_WIDTH_HACK slop.)
+  let refFont = '';
+  let scale = 1; // candidate px size / MEASURE_REF_PX
+  const refWidth = (s: string): number => {
+    const k = `${refFont}\u0000${s}`;
+    let w = cachedTextWidths.get(k);
+    if (w === undefined) {
+      ctx.font = refFont;
+      w = ctx.measureText(s).width;
+      if (cachedTextWidths.size >= MEASURE_CACHE_LIMIT) cachedTextWidths.clear();
+      cachedTextWidths.set(k, w);
+    }
+    return w;
+  };
+  const lineWidth = (line: string): number => {
+    const words = line.split(' ');
+    let total = (words.length - 1) * refWidth(' ');
+    for (const w of words) total += refWidth(w);
+    return total * scale;
+  };
+
   const wrapLines = (text: string, maxWidthPX: number): string[] => {
     const lines: string[] = [];
+    const spacePX = refWidth(' ') * scale;
     for (const hardLine of text.split('\n')) {
       const words = hardLine.split(' ');
       let current = '';
+      let currentPX = 0;
       for (const word of words) {
-        const candidate = current ? `${current} ${word}` : word;
-        if (ctx.measureText(candidate).width > maxWidthPX && current) {
+        const wordPX = refWidth(word) * scale;
+        const candidatePX = current ? currentPX + spacePX + wordPX : wordPX;
+        if (candidatePX > maxWidthPX && current) {
           lines.push(current);
           current = word;
+          currentPX = wordPX;
         } else {
-          current = candidate;
+          current = current ? `${current} ${word}` : word;
+          currentPX = candidatePX;
         }
       }
       lines.push(current);
@@ -351,7 +390,8 @@ export function calculateFontSize(
 
   const isOutsideBounds = (): boolean => {
     // use px units for canvas — pt is unreliable in canvas implementations
-    ctx.font = `${fontWeight} ${convertPTtoPX(fontSize)}px ${fontFamily}`;
+    refFont = `${fontWeight} ${MEASURE_REF_PX}px ${fontFamily}`;
+    scale = convertPTtoPX(fontSize) / MEASURE_REF_PX;
 
     // WTF_CHAR_WIDTH_HACK shrinks the allowed width to account for GSlides
     // rendering characters wider than canvas does
@@ -370,9 +410,8 @@ export function calculateFontSize(
     let maxLineWidthPX = 0;
     let totalEmHeightPX = 0;
     for (const line of lines) {
-      const m = ctx.measureText(line);
       const lineHeightPX = convertPTtoPX(fontSize) * SLIDES_LINE_HEIGHT_EM;
-      maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
+      maxLineWidthPX = Math.max(maxLineWidthPX, lineWidth(line));
       totalEmHeightPX += lineHeightPX;
     }
 
