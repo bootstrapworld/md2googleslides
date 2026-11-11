@@ -4,7 +4,7 @@
   "description": "Convert Markdown to Google Slides",
   "engines": {
     "npm": ">=9",
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "type": "module",
   "exports": "./index.js",
