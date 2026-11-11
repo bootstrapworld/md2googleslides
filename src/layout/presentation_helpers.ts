@@ -352,7 +352,8 @@ export function calculateFontSize(
     if (w === undefined) {
       ctx.font = refFont;
       w = ctx.measureText(s).width;
-      if (cachedTextWidths.size >= MEASURE_CACHE_LIMIT) cachedTextWidths.clear();
+      if (cachedTextWidths.size >= MEASURE_CACHE_LIMIT)
+        cachedTextWidths.clear();
       cachedTextWidths.set(k, w);
     }
     return w;
