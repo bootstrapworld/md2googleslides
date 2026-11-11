@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {slides_v1 as SlidesV1} from 'googleapis';
-import {createCanvas} from 'canvas';
+import {Canvas} from 'skia-canvas';
 import assert from 'assert';
 import {TextDefinition} from '../slides.js';
 
@@ -273,7 +273,7 @@ export function calculateFontSize(
   // adjust the size to account for space lost to padding
   sizePT.width -= DEFAULT_PADDING;
   sizePT.height -= DEFAULT_PADDING;
-  const canvas = createCanvas(sizePT.width, sizePT.height);
+  const canvas = new Canvas(sizePT.width, sizePT.height);
   const ctx = canvas.getContext('2d');
 
   // starting with the default, merge style rules from oldest-to-youngest
@@ -345,7 +345,7 @@ export function calculateFontSize(
   };
 
   const isOutsideBounds = (): boolean => {
-    // use px units for canvas — pt is unreliable in node-canvas
+    // use px units for canvas — pt is unreliable in canvas implementations
     ctx.font = `${fontWeight} ${convertPTtoPX(fontSize)}px ${fontFamily}`;
 
     // WTF_CHAR_WIDTH_HACK shrinks the allowed width to account for GSlides
@@ -366,8 +366,7 @@ export function calculateFontSize(
     let totalEmHeightPX = 0;
     for (const line of lines) {
       const m = ctx.measureText(line);
-      const lineHeightPX =
-        (m.emHeightAscent as number) + (m.emHeightDescent as number);
+      const lineHeightPX = m.emHeightAscent + m.emHeightDescent;
       maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
       totalEmHeightPX += lineHeightPX;
     }
