@@ -249,6 +249,11 @@ const DEFAULT_PADDING = 0.2 * 72; // 72pt per inch, assume 0.1in padding on all 
 // in practice, characters seem to be roughly 1.15x wider in GSlides than in canvas elt
 const WTF_CHAR_WIDTH_HACK = 1.15;
 
+// Measured from Slides thumbnails (Arial, Georgia, Courier New, Verdana, Roboto,
+// Times New Roman at 8-48pt, 100/115/150% spacing): the pitch between lines is
+// 1.2 x font size x lineSpacing, regardless of the font. Its metrics play no part.
+const SLIDES_LINE_HEIGHT_EM = 1.2;
+
 // NOTE(Emmanuel): probably unneeded if we ever fix the regular markdown parser
 const cachedFontCalculations = new Map();
 
@@ -366,7 +371,7 @@ export function calculateFontSize(
     let totalEmHeightPX = 0;
     for (const line of lines) {
       const m = ctx.measureText(line);
-      const lineHeightPX = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+      const lineHeightPX = convertPTtoPX(fontSize) * SLIDES_LINE_HEIGHT_EM;
       maxLineWidthPX = Math.max(maxLineWidthPX, m.width);
       totalEmHeightPX += lineHeightPX;
     }
