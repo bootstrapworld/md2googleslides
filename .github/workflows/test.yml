@@ -24,15 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12, 14]
+        node-version: [20, 22, 24]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
+        env:
+          # tests never launch a browser, so skip the Chrome download
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
       - run: npm test
   test:
     needs: [matrix]
